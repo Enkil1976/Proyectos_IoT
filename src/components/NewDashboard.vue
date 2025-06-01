@@ -292,10 +292,23 @@ export default {
   },
   methods: {
     getStatusColor(status, value, name) {
-      // Lógica para temperatura
-      if (name && name.includes('Temperatura')) {
-        if (value < 5 || value > 30) return 'red';
-        if (Math.abs(value - 22) > 2) return 'orange';
+      // Lógica para temperatura vs dew point
+      if (name && (name.includes('Temperatura') || name.includes('DewPoint'))) {
+        const temp = this.kpis.find(k => k.name.includes('Temperatura'))?.value || 0;
+        const dewPoint = this.kpis.find(k => k.name.includes('DewPoint'))?.value || 0;
+        const diff = temp - dewPoint;
+        
+        if (diff <= 1) return 'red'; // Alerta crítica
+        if (diff <= 2) return 'orange'; // Alerta preventiva
+        
+        // Lógica normal para temperatura
+        if (name.includes('Temperatura')) {
+          if (value < 5 || value > 30) return 'red';
+          if (Math.abs(value - 22) > 2) return 'orange';
+          return 'green';
+        }
+        
+        // Lógica normal para dew point
         return 'green';
       }
       
