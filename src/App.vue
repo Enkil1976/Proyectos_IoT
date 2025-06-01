@@ -1,26 +1,15 @@
 <template>
-  <div id="app">
-    <AppHeader />
-    <DashboardCharts />
-    <footer class="app-footer">
-      <span>Invernadero IoT &copy; 2025 &mdash; Dashboard UX/UI by Windsurf AI</span>
-    </footer>
-  </div>
+  <v-app>
+    <NewDashboard />
+    <v-footer app color="green-darken-4" class="text-center">
+      <span class="text-caption">Invernadero IoT &copy; 2025 &mdash; Dashboard UX/UI by Windsurf AI</span>
+    </v-footer>
+  </v-app>
 </template>
 
 <script setup>
-import DashboardCharts from './components/DashboardCharts.vue';
-import AppHeader from './components/AppHeader.vue';
+import NewDashboard from './components/NewDashboard.vue';
 </script>
-
-<style>
-#app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 40px;
-}
-</style>
 
 <style>
 html, body {
@@ -34,4 +23,3 @@ html, body {
   font-family: 'Inter', 'Roboto', Arial, sans-serif;
 }
 </style>
-
