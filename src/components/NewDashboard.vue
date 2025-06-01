@@ -56,14 +56,14 @@
     <!-- Contenido principal -->
     <v-main>
       <v-container fluid>
-        <!-- Tarjetas KPI - Temperatura y Humedad -->
+        <!-- Tarjetas KPI - Clima -->
         <v-row class="mt-2">
           <!-- Columna Temperatura -->
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="3">
             <v-subheader>Temperatura</v-subheader>
             <v-row>
               <v-col v-for="kpi in kpis.filter(k => k.name.includes('Temperatura'))" :key="kpi.id" cols="12">
-                <v-card :color="getStatusColor(kpi.status)" dark class="mb-2">
+                <v-card :color="getStatusColor(kpi.status, kpi.value, kpi.name)" dark class="mb-2">
                   <v-card-title class="d-flex justify-space-between">
                     <div>
                       <v-icon left>{{ kpi.icon }}</v-icon>
@@ -81,14 +81,58 @@
           </v-col>
 
           <!-- Columna Humedad -->
-          <v-col cols="12" md="6">
+          <v-col cols="12" md="3">
             <v-subheader>Humedad</v-subheader>
             <v-row>
               <v-col v-for="kpi in kpis.filter(k => k.name.includes('Humedad'))" :key="kpi.id" cols="12">
-                <v-card :color="getStatusColor(kpi.status)" dark class="mb-2">
+                <v-card :color="getStatusColor(kpi.status, kpi.value, kpi.name)" dark class="mb-2">
                   <v-card-title class="d-flex justify-space-between">
                     <div>
                       <v-icon left>{{ kpi.icon }}</v-icon>
+                      {{ kpi.name }}
+                    </div>
+                    <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
+                  </v-card-title>
+                  <v-card-text>
+                    <v-progress-linear v-if="kpi.trend" :model-value="kpi.trendValue" :color="kpi.trendColor"></v-progress-linear>
+                    <div class="text-caption mt-2">{{ kpi.statusText }}</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-col>
+
+          <!-- Columna Punto de Rocío -->
+          <v-col cols="12" md="3">
+            <v-subheader>Punto de Rocío</v-subheader>
+            <v-row>
+              <v-col v-for="kpi in kpis.filter(k => k.name.includes('DewPoint'))" :key="kpi.id" cols="12">
+                <v-card :color="getStatusColor(kpi.status)" dark class="mb-2">
+                  <v-card-title class="d-flex justify-space-between">
+                    <div>
+                      <v-icon left>mdi-weather-rainy</v-icon>
+                      {{ kpi.name }}
+                    </div>
+                    <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
+                  </v-card-title>
+                  <v-card-text>
+                    <v-progress-linear v-if="kpi.trend" :model-value="kpi.trendValue" :color="kpi.trendColor"></v-progress-linear>
+                    <div class="text-caption mt-2">{{ kpi.statusText }}</div>
+                  </v-card-text>
+                </v-card>
+              </v-col>
+            </v-row>
+          </v-col>
+
+          <!-- Columna Índice de Calor -->
+          <v-col cols="12" md="3">
+            <v-subheader>Índice de Calor</v-subheader>
+            <v-row>
+              <v-col v-for="kpi in kpis.filter(k => k.name.includes('HeatIndex'))" :key="kpi.id" cols="12">
+                <v-card :color="getStatusColor(kpi.status)" dark class="mb-2">
+                  <v-card-title class="d-flex justify-space-between">
+                    <div>
+                      <v-icon left>mdi-thermometer-alert</v-icon>
                       {{ kpi.name }}
                     </div>
                     <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
@@ -222,8 +266,12 @@ export default {
         { id: 4, name: 'Temperatura 1', value: 24.5, unit: '°C', icon: 'mdi-thermometer', status: 'optimal', trend: 'up', trendValue: 60, trendColor: 'green', statusText: 'Óptima' },
         { id: 5, name: 'Temperatura 2', value: 25.1, unit: '°C', icon: 'mdi-thermometer', status: 'optimal', trend: 'stable', trendValue: 50, trendColor: 'green', statusText: 'Óptima' },
         { id: 6, name: 'Humedad 1', value: 65, unit: '%', icon: 'mdi-water-percent', status: 'warning', trend: 'down', trendValue: 40, trendColor: 'orange', statusText: 'Bajando' },
-        { id: 7, name: 'Humedad 2', value: 68, unit: '%', icon: 'mdi-water-percent', status: 'optimal', trend: 'stable', trendValue: 50, trendColor: 'green', statusText: 'Estable' },
-        { id: 8, name: 'LUX', value: 12000, unit: 'lux', icon: 'mdi-white-balance-sunny', status: 'critical', trend: 'up', trendValue: 80, trendColor: 'red', statusText: 'Alto nivel' }
+        { id: 7, name: 'Humedad 2', value: 68, unit: '%', icon: 'mdi-water-percent', status: 'warning', trend: 'stable', trendValue: 50, trendColor: 'orange', statusText: 'Estable' },
+        { id: 8, name: 'LUX', value: 12000, unit: 'lux', icon: 'mdi-white-balance-sunny', status: 'critical', trend: 'up', trendValue: 80, trendColor: 'red', statusText: 'Alto nivel' },
+        { id: 9, name: 'DewPoint 1', value: 18.2, unit: '°C', icon: 'mdi-weather-rainy', status: 'optimal', trend: 'stable', trendValue: 50, trendColor: 'green', statusText: 'Normal' },
+        { id: 10, name: 'DewPoint 2', value: 17.8, unit: '°C', icon: 'mdi-weather-rainy', status: 'optimal', trend: 'stable', trendValue: 50, trendColor: 'green', statusText: 'Normal' },
+        { id: 11, name: 'HeatIndex 1', value: 26.3, unit: '°C', icon: 'mdi-thermometer-alert', status: 'warning', trend: 'up', trendValue: 65, trendColor: 'orange', statusText: 'Cuidado' },
+        { id: 12, name: 'HeatIndex 2', value: 27.1, unit: '°C', icon: 'mdi-thermometer-alert', status: 'warning', trend: 'up', trendValue: 70, trendColor: 'orange', statusText: 'Cuidado' }
       ],
       alerts: [
         { time: '15:30', message: 'Nivel de LUX excede máximo', color: 'red' },
@@ -243,12 +291,27 @@ export default {
     }
   },
   methods: {
-    getStatusColor(status) {
+    getStatusColor(status, value, name) {
+      // Lógica para temperatura
+      if (name && name.includes('Temperatura')) {
+        if (value < 5 || value > 30) return 'red';
+        if (Math.abs(value - 22) > 2) return 'orange';
+        return 'green';
+      }
+      
+      // Lógica para humedad
+      if (name && name.includes('Humedad')) {
+        if (Math.abs(value - 63) > 10) return 'red';
+        if (Math.abs(value - 63) > 5) return 'orange';
+        return 'green';
+      }
+
+      // Lógica por defecto para otros KPIs
       return {
         optimal: 'green',
         warning: 'orange',
         critical: 'red'
-      }[status]
+      }[status];
     }
   }
 }

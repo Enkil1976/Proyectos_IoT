@@ -78,28 +78,20 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, defineExpose } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
-import { connectMQTT, disconnectMQTT } from '../mqtt';
 
 // Registrar el componente localmente
 const components = { VueApexCharts };
 defineExpose({ components });
 
 const topics = [
-  { topic: 'Invernadero/Agua/data', title: 'Calidad del Agua' },
-  { topic: 'Invernadero/Luxometro/data', title: 'Luxómetro (Luz)' },
-  { topic: 'Invernadero/TemHum/data', title: 'Temperatura/Humedad 1' },
-  { topic: 'Invernadero/TemHum2/data', title: 'Temperatura/Humedad 2' }
+  { endpoint: '/api/calidad-agua', title: 'Calidad del Agua' },
+  { endpoint: '/api/luxometro', title: 'Luxómetro (Luz)' },
+  { endpoint: '/api/temhum1', title: 'Temperatura/Humedad 1' },
+  { endpoint: '/api/temhum2', title: 'Temperatura/Humedad 2' }
 ];
 
 const charts = reactive({});
 
-// Mapear topic a endpoint backend
-const topicToEndpoint = {
-  'Invernadero/Agua/data': '/api/calidad-agua',
-  'Invernadero/Luxometro/data': '/api/luxometro',
-  'Invernadero/TemHum/data': '/api/temhum1',
-  'Invernadero/TemHum2/data': '/api/temhum2',
-};
 
 // Inicializar la estructura de cada gráfico
 for (const { topic, title } of topics) {
@@ -248,108 +240,6 @@ async function loadHistory() {
 onMounted(async () => {
   await loadHistory();
   historyInterval = setInterval(loadHistory, 5000);
-  
-  client = connectMQTT({
-    topics: topics.map(t => t.topic),
-    onMessage: (t, msg) => {
-      try {
-        // Intentar parsear JSON, si no es posible, usar valor directo
-        let value;
-        try {
-          const parsed = JSON.parse(msg);
-          if (typeof parsed === 'object' && parsed.value !== undefined) {
-            value = parsed.value;
-          } else {
-            value = parsed;
-          }
-        } catch {
-          value = parseFloat(msg);
-        }
-        if (charts[t]) {
-          // Si el mensaje es un objeto con varias métricas
-          if (typeof value === 'object' && value !== null) {
-            charts[t].metrics = [];
-            for (const [k, v] of Object.entries(value)) {
-              if (!isNaN(v)) {
-                charts[t].metrics.push({
-                  label: k,
-                  series: [Number(v)],
-                  options: {
-                    chart: {
-                      type: 'radialBar',
-                      height: 120,
-                      toolbar: { show: false }
-                    },
-                    plotOptions: {
-                      radialBar: {
-                        hollow: { size: '70%' },
-                        dataLabels: {
-                          show: true,
-                          name: { show: true, fontSize: '13px', offsetY: 0 },
-                          value: { 
-                            show: true, 
-                            fontSize: '22px', 
-                            offsetY: 5,
-                            formatter: function(v) {
-                              return (v !== undefined && v !== null ? Number(v).toFixed(2) : '0.00');
-                            },
-                            suffix: ''
-                          }
-                        }
-                      }
-                    },
-                    fill: {
-                      type: 'gradient',
-                      gradient: {
-                        shade: 'dark',
-                        type: 'horizontal',
-                        shadeIntensity: 0.5,
-                        gradientToColors: ['#ABE5A1'],
-                        inverseColors: true,
-                        opacityFrom: 1,
-                        opacityTo: 1,
-                        stops: [0, 100]
-                      }
-                    },
-                    labels: [k]
-                  }
-                });
-              }
-            }
-          } else if (!isNaN(value)) {
-            charts[t].metrics = [{
-              label: charts[t].title,
-              series: [Number(value)],
-              options: {
-                ...charts[t].metrics[0].options,
-                plotOptions: {
-                  ...charts[t].metrics[0].options.plotOptions,
-                  radialBar: {
-                    ...charts[t].metrics[0].options.plotOptions.radialBar,
-                    dataLabels: {
-                      ...charts[t].metrics[0].options.plotOptions.radialBar.dataLabels,
-                      value: {
-                        ...charts[t].metrics[0].options.plotOptions.radialBar.dataLabels.value,
-                        suffix: ''
-                      }
-                    }
-                  }
-                }
-              }
-            }];
-          } else {
-            charts[t].metrics = [{
-              label: charts[t].title,
-              series: [0],
-              options: charts[t].metrics[0].options
-            }];
-          }
-        }
-      } catch (e) {
-        console.warn('Error procesando mensaje MQTT:', t, msg, e);
-      }
-    }
-  });
 });
 
 onUnmounted(() => {
