@@ -42,6 +42,43 @@ export const getAmbientalSensor1 = async () => {
 };
 
 // Formatear datos para gráficos
+export const getAmbientalSensor2 = async () => {
+  try {
+    console.log(`Haciendo request a: ${API_BASE_URL}/temhum2`);
+    const response = await axios.get(`${API_BASE_URL}/temhum2`, {
+      timeout: 5000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      withCredentials: false
+    });
+    
+    console.log('Respuesta del API:', {
+      status: response.status,
+      data: response.data
+    });
+
+    if (!response.data?.success) {
+      throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
+    }
+
+    return response.data.data;
+  } catch (error) {
+    console.error('Error detallado en getAmbientalSensor2:', {
+      message: error.message,
+      code: error.code,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method
+      },
+      response: error.response?.data
+    });
+    throw error;
+  }
+};
+
 export const formatSensorData = (sensorData) => {
   console.log('Datos recibidos para formatear:', sensorData);
   const formatted = {

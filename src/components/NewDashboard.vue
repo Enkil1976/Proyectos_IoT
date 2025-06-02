@@ -236,9 +236,13 @@
 </template>
 
 <script>
+import { getAmbientalSensor1, getAmbientalSensor2, formatSensorData } from '@/services/sensorService';
+
 export default {
   data() {
     return {
+      sensorData: null,
+      updateInterval: null,
       drawer: false,
       globalStatus: 'optimal',
       currentDateTime: new Date().toLocaleString(),
@@ -291,6 +295,45 @@ export default {
     }
   },
   methods: {
+    async fetchSensorData() {
+      try {
+        const [data1, data2] = await Promise.all([
+          getAmbientalSensor1(),
+          getAmbientalSensor2()
+        ]);
+        
+        this.sensorData = {
+          sensor1: formatSensorData(data1[0]),
+          sensor2: formatSensorData(data2[0])
+        };
+        
+        // Actualizamos los KPIs con datos reales
+        this.kpis = this.kpis.map(kpi => {
+          if (kpi.name === 'Temperatura 1') {
+            return {...kpi, value: this.sensorData.sensor1.temperatura};
+          }
+          if (kpi.name === 'Temperatura 2') {
+            return {...kpi, value: this.sensorData.sensor2.temperatura};
+          }
+          if (kpi.name === 'Humedad 1') {
+            return {...kpi, value: this.sensorData.sensor1.humedad};
+          }
+          if (kpi.name === 'Humedad 2') {
+            return {...kpi, value: this.sensorData.sensor2.humedad};
+          }
+          if (kpi.name === 'DewPoint 1') {
+            return {...kpi, value: this.sensorData.sensor1.dewPoint};
+          }
+          if (kpi.name === 'DewPoint 2') {
+            return {...kpi, value: this.sensorData.sensor2.dewPoint};
+          }
+          return kpi;
+        });
+      } catch (error) {
+        console.error('Error fetching sensor data:', error);
+      }
+    },
+
     getStatusColor(status, value, name) {
       // Lógica para temperatura vs dew point
       if (name && (name.includes('Temperatura') || name.includes('DewPoint'))) {
@@ -326,6 +369,14 @@ export default {
         critical: 'red'
       }[status];
     }
+  },
+  mounted() {
+    this.fetchSensorData();
+    // Actualizar datos cada 5 segundos
+    this.updateInterval = setInterval(this.fetchSensorData, 5000);
+  },
+  beforeUnmount() {
+    clearInterval(this.updateInterval);
   }
 }
 </script>
