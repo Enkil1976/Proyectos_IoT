@@ -77,28 +77,28 @@ function calcDewPoint(temp, hum) {
 // Endpoint para desplegar las tablas necesarias
 app.post('/api/deploy-tables', async (req, res) => {
   const sql = `
-    CREATE TABLE IF NOT EXISTS Luxometro (
+    CREATE TABLE IF NOT EXISTS luxometro (
         id SERIAL PRIMARY KEY,
         light FLOAT,
         white_light FLOAT,
         raw_light FLOAT,
         received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS Calidad_Agua (
+    CREATE TABLE IF NOT EXISTS calidad_agua (
         id SERIAL PRIMARY KEY,
         ec FLOAT,
         ppm FLOAT,
         ph FLOAT,
         received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS TemHum1 (
+    CREATE TABLE IF NOT EXISTS temhum1 (
         id SERIAL PRIMARY KEY,
         temperatura FLOAT,
         humedad FLOAT,
         dew_point FLOAT,
         received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-    CREATE TABLE IF NOT EXISTS TemHum2 (
+    CREATE TABLE IF NOT EXISTS temhum2 (
         id SERIAL PRIMARY KEY,
         temperatura FLOAT,
         humedad FLOAT,
@@ -122,7 +122,7 @@ app.post('/api/deploy-tables', async (req, res) => {
 // API endpoints para consultar datos históricos desde PostgreSQL
 app.get('/api/luxometro', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM Luxometro ORDER BY received_at DESC');
+    const result = await client.query('SELECT * FROM luxometro ORDER BY received_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -131,7 +131,7 @@ app.get('/api/luxometro', async (req, res) => {
 
 app.get('/api/calidad-agua', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM Calidad_Agua ORDER BY received_at DESC');
+    const result = await client.query('SELECT * FROM calidad_agua ORDER BY received_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -140,7 +140,7 @@ app.get('/api/calidad-agua', async (req, res) => {
 
 app.get('/api/temhum1', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM TemHum1 ORDER BY received_at DESC');
+    const result = await client.query('SELECT * FROM temhum1 ORDER BY received_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -149,7 +149,7 @@ app.get('/api/temhum1', async (req, res) => {
 
 app.get('/api/temhum2', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM TemHum2 ORDER BY received_at DESC');
+    const result = await client.query('SELECT * FROM temhum2 ORDER BY received_at DESC');
     res.json({ success: true, data: result.rows });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
