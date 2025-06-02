@@ -236,7 +236,7 @@
 </template>
 
 <script>
-import { getAmbientalSensor1, getAmbientalSensor2, formatSensorData } from '@/services/sensorService';
+import { getAmbientalSensor1, getAmbientalSensor2, getWaterQuality, formatSensorData } from '@/services/sensorService';
 
 export default {
   data() {
@@ -297,14 +297,16 @@ export default {
   methods: {
     async fetchSensorData() {
       try {
-        const [data1, data2] = await Promise.all([
+        const [data1, data2, waterData] = await Promise.all([
           getAmbientalSensor1(),
-          getAmbientalSensor2()
+          getAmbientalSensor2(),
+          getWaterQuality()
         ]);
         
         this.sensorData = {
           sensor1: formatSensorData(data1[0]),
-          sensor2: formatSensorData(data2[0])
+          sensor2: formatSensorData(data2[0]),
+          water: waterData[0]
         };
         
         // Actualizamos los KPIs con datos reales
@@ -326,6 +328,15 @@ export default {
           }
           if (kpi.name === 'DewPoint 2') {
             return {...kpi, value: this.sensorData.sensor2.dewPoint};
+          }
+          if (kpi.name === 'pH') {
+            return {...kpi, value: this.sensorData.water.ph};
+          }
+          if (kpi.name === 'EC') {
+            return {...kpi, value: this.sensorData.water.ec};
+          }
+          if (kpi.name === 'PPM') {
+            return {...kpi, value: this.sensorData.water.ppm};
           }
           return kpi;
         });

@@ -79,6 +79,40 @@ export const getAmbientalSensor2 = async () => {
   }
 };
 
+export const getWaterQuality = async () => {
+  try {
+    console.log(`Haciendo request a: ${API_BASE_URL}/calidad-agua`);
+    const response = await axios.get(`${API_BASE_URL}/calidad-agua`, {
+      timeout: 5000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      withCredentials: false
+    });
+    
+    console.log('Respuesta calidad-agua:', {
+      status: response.status,
+      data: response.data
+    });
+
+    if (!response.data?.success) {
+      throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
+    }
+
+    return response.data.data;
+  } catch (error) {
+    console.error('Error en getWaterQuality:', {
+      message: error.message,
+      code: error.code,
+      config: error.config,
+      response: error.response?.data
+    });
+    throw error;
+  }
+};
+
 export const formatSensorData = (sensorData) => {
   console.log('Datos recibidos para formatear:', sensorData);
   const formatted = {
