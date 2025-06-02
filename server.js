@@ -87,7 +87,7 @@ app.post('/api/deploy-tables', async (req, res) => {
     CREATE TABLE IF NOT EXISTS calidad_agua (
         id SERIAL PRIMARY KEY,
         ec FLOAT,
-        ppm FLOAT,
+        pph FLOAT, -- Cambiar a ppm en la próxima migración
         ph FLOAT,
         received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );

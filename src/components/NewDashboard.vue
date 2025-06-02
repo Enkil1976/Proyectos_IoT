@@ -303,11 +303,15 @@ export default {
           getWaterQuality()
         ]);
         
+        console.log('Datos de calidad de agua recibidos:', waterData);
+        
         this.sensorData = {
           sensor1: formatSensorData(data1[0]),
           sensor2: formatSensorData(data2[0]),
           water: waterData[0]
         };
+
+        console.log('Estructura completa de sensorData:', this.sensorData);
         
         // Actualizamos los KPIs con datos reales
         this.kpis = this.kpis.map(kpi => {
@@ -336,7 +340,7 @@ export default {
             return {...kpi, value: this.sensorData.water.ec};
           }
           if (kpi.name === 'PPM') {
-            return {...kpi, value: this.sensorData.water.ppm};
+            return {...kpi, value: this.sensorData.water.pph}; // Mapear pph a PPM
           }
           return kpi;
         });
