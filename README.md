@@ -60,7 +60,19 @@ invernadero-iot/
    - Node.js (v18+)
    - PostgreSQL (configurar en server.js)
 
-2. **Instalación**:
+2. **Pruebas Unitarias**:
+   ```bash
+   # Ejecutar todas las pruebas
+   npm test
+   
+   # Ejecutar pruebas con cobertura
+   npm test --coverage
+   
+   # Ver reporte de cobertura
+   open coverage/lcov-report/index.html
+   ```
+
+3. **Instalación**:
    ```bash
    npm install
    ```
@@ -83,10 +95,10 @@ invernadero-iot/
 ## Configuración de PostgreSQL
 
 El backend espera una base de datos PostgreSQL con las siguientes tablas:
-- `Luxometro` (light, white_light, raw_light, received_at)
-- `Calidad_Agua` (ec, ppm, ph, received_at) 
-- `TemHum1` (temperatura, humedad, dew_point, received_at)
-- `TemHum2` (temperatura, humedad, dew_point, received_at)
+- `luxometro` (light, white_light, raw_light, received_at)
+- `calidad_agua` (ec, ppm, ph, received_at) 
+- `temhum1` (temperatura, humedad, dew_point, received_at)
+- `temhum2` (temperatura, humedad, dew_point, received_at)
 
 Puedes crear las tablas ejecutando:
 ```bash

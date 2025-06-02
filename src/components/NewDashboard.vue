@@ -3,7 +3,7 @@
     <!-- AppBar superior -->
     <v-app-bar app color="green-darken-3" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title>
+      <v-toolbar-title data-test="app-title">
         <v-icon left>mdi-sprout</v-icon>
         Invernadero IoT
       </v-toolbar-title>

@@ -1,0 +1,16 @@
+Reporte de Cobertura de Pruebas
+-------------------------------
+Fecha: 2025-02-06 00:56:17
+Comando ejecutado: npm test --coverage
+
+Los reportes de cobertura están disponibles en:
+1. HTML: coverage/lcov-report/index.html
+   - Para visualizar: open coverage/lcov-report/index.html
+2. JSON: coverage/coverage-final.json
+3. LCOV: coverage/lcov.info
+
+Métricas incluidas:
+- Porcentaje de cobertura por archivo
+- Líneas cubiertas/no cubiertas
+- Funciones cubiertas
+- Branches cubiertos

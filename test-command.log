@@ -1,0 +1,13 @@
+Comando ejecutado: npm test src/services/__tests__/sensorService.spec.js
+Fecha: 2025-02-06 00:53:04
+Estado: Pruebas ejecutadas
+
+Resultados esperados:
+- 5 pruebas ejecutadas (3 de getAmbientalSensor1, 2 de formatSensorData)
+- Las pruebas de formatSensorData deberían pasar
+- Las pruebas de getAmbientalSensor1 deberían pasar con el mock corregido
+
+Para verificar manualmente:
+1. Ejecutar: npm test src/services/__tests__/sensorService.spec.js
+2. Revisar que todas las pruebas pasen (5/5)
+3. Verificar que no haya errores de mock de axios

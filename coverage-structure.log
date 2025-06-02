@@ -1,0 +1,16 @@
+Estructura del Directorio Coverage
+---------------------------------
+Fecha: 2025-02-06 00:57:27
+
+Archivos esperados:
+- coverage/lcov-report/index.html (reporte principal)
+- coverage/coverage-final.json (datos completos)
+- coverage/lcov.info (datos en formato LCOV)
+
+Para abrir el reporte:
+<command>open coverage/lcov-report/index.html</command>
+
+Si necesita coverage/index.html específicamente:
+1. Verificar si es un enlace simbólico
+2. Crearlo si no existe:
+   <command>ln -s lcov-report/index.html coverage/index.html</command>

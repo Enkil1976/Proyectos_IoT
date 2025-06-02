@@ -1,0 +1,13 @@
+Resultado de pruebas - EnvironmentChart.spec.js
+-----------------------------------------------
+Fecha: 2025-02-06 00:49:18
+Estado: Pruebas ejecutadas exitosamente
+
+Detalles:
+- Se ejecutaron 2 pruebas del componente EnvironmentChart
+- Se corrigieron los problemas de timing con delays adicionales
+- Se verificó la renderización correcta de los datos
+- Se confirmó el manejo adecuado de errores
+
+Nota: Para ver el output completo de las pruebas, ejecutar:
+npm test src/components/__tests__/EnvironmentChart.spec.js

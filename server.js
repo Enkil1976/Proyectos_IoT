@@ -10,11 +10,56 @@ app.use(express.json());
 
 const PG_URI = 'postgres://innovaiq:5Anf0rd01!@2h4eh9.easypanel.host:5423/innovaiq?sslmode=disable';
 
-const client = new Client({ connectionString: PG_URI });
+const client = new Client({ 
+  connectionString: PG_URI,
+  // Configuración para manejo de conexión
+  connectionTimeoutMillis: 5000,
+  idle_in_transaction_session_timeout: 10000,
+  keepAlive: true
+});
 
-client.connect()
-  .then(() => console.log('✅ Conexión exitosa a PostgreSQL'))
-  .catch(err => console.error('❌ Error de conexión a PostgreSQL:', err));
+async function connectWithRetry() {
+  try {
+    await client.connect();
+    console.log('✅ Conexión exitosa a PostgreSQL');
+    
+    // Heartbeat cada 5 minutos para mantener conexión activa
+    setInterval(async () => {
+      try {
+        await client.query('SELECT 1');
+      } catch (err) {
+        console.error('❌ Error en heartbeat PostgreSQL:', err);
+        await handleDisconnect();
+      }
+    }, 300000);
+    
+  } catch (err) {
+    console.error('❌ Error de conexión a PostgreSQL:', err);
+    console.log('Reintentando conexión en 5 segundos...');
+    setTimeout(connectWithRetry, 5000);
+  }
+}
+
+async function handleDisconnect() {
+  try {
+    await client.end();
+    console.log('Conexión PostgreSQL cerrada. Reconectando...');
+    await connectWithRetry();
+  } catch (err) {
+    console.error('Error al cerrar conexión PostgreSQL:', err);
+  }
+}
+
+// Manejar eventos de error
+client.on('error', async (err) => {
+  console.error('⚠️ Error en cliente PostgreSQL:', err);
+  if (err.code === 'ECONNRESET') {
+    await handleDisconnect();
+  }
+});
+
+// Iniciar conexión
+connectWithRetry();
 
 // Magnus formula para punto de rocío en °C
 function calcDewPoint(temp, hum) {
@@ -122,6 +167,17 @@ app.get('/api/pg-test', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 4000;
-app.listen(PORT, () => {
-  console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
-});
+
+// Exportar componentes para testing
+module.exports = {
+  app,
+  client,
+  calcDewPoint
+};
+
+// Solo iniciar servidor si no estamos en modo test
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Servidor backend escuchando en http://localhost:${PORT}`);
+  });
+}

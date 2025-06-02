@@ -1,5 +1,5 @@
 <template>
-  <div class="dashboard-charts">
+  <div class="dashboard-charts" data-test="dashboard-container">
     <h2>Dashboard Sensores IoT</h2>
     <div class="charts-grid">
       <div v-for="key in Object.keys(charts)" :key="key" class="chart-box">
@@ -78,17 +78,25 @@
 <script setup>
 import { ref, reactive, onMounted, onUnmounted, defineExpose } from 'vue';
 import VueApexCharts from 'vue3-apexcharts';
+import axios from 'axios';
 
 // Registrar el componente localmente
 const components = { VueApexCharts };
 defineExpose({ components });
 
 const topics = [
-  { endpoint: '/api/calidad-agua', title: 'Calidad del Agua' },
-  { endpoint: '/api/luxometro', title: 'Luxómetro (Luz)' },
-  { endpoint: '/api/temhum1', title: 'Temperatura/Humedad 1' },
-  { endpoint: '/api/temhum2', title: 'Temperatura/Humedad 2' }
+  { topic: 'calidad-agua', endpoint: '/api/calidad-agua', title: 'Calidad del Agua' },
+  { topic: 'luxometro', endpoint: '/api/luxometro', title: 'Luxómetro (Luz)' },
+  { topic: 'temhum1', endpoint: '/api/temhum1', title: 'Temperatura/Humedad 1' },
+  { topic: 'temhum2', endpoint: '/api/temhum2', title: 'Temperatura/Humedad 2' }
 ];
+
+const topicToEndpoint = {
+  'calidad-agua': '/api/calidad-agua',
+  'luxometro': '/api/luxometro',
+  'temhum1': '/api/temhum1',
+  'temhum2': '/api/temhum2'
+};
 
 const charts = reactive({});
 
@@ -200,9 +208,7 @@ let historyInterval = null;
 // Función para cargar históricos
 async function loadHistory() {
   for (const { topic } of topics) {
-    const endpoint = topicToEndpoint[topic];
-    if (!endpoint) continue;
-    const data = await fetchHistory(endpoint);
+    const data = await fetchHistory(topic.endpoint);
     // Detectar métricas, soportando snake_case y camelCase
     const metricKeys = data.length > 0 ? Object.keys(data[0]).filter(k => !['id','received_at'].includes(k)) : [];
     charts[topic].history = data;
@@ -237,8 +243,38 @@ async function loadHistory() {
   }
 }
 
+async function fetchInitialData() {
+  try {
+    console.log('Fetching initial sensor data...');
+    const urls = [
+      '/api/calidad-agua',
+      '/api/luxometro', 
+      '/api/temhum1',
+      '/api/temhum2'
+    ];
+    console.log('API endpoints:', urls);
+    const responses = await Promise.all(urls.map(url => {
+      console.log('Calling:', url);
+      return axios.get(url);
+    }));
+    
+    // Process responses and update charts data
+    responses.forEach((res, i) => {
+      const topic = topics[i].topic;
+      if (res.data) {
+        charts[topic].metrics[0].series = [res.data.value || 0];
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching initial data:', error);
+  }
+}
+
 onMounted(async () => {
-  await loadHistory();
+  await Promise.all([
+    fetchInitialData(),
+    loadHistory()
+  ]);
   historyInterval = setInterval(loadHistory, 5000);
 });
 

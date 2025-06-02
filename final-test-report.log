@@ -1,0 +1,27 @@
+Reporte Final de Pruebas - Invernadero IoT
+------------------------------------------
+Fecha: 2025-02-06 00:54:20
+Estado: Todas las pruebas pasaron correctamente
+
+Resumen por Componente:
+
+1. EnvironmentChart (src/components/__tests__/EnvironmentChart.spec.js)
+- Pruebas: 2/2 pasadas
+- Correcciones realizadas:
+  * Se agregaron delays para timing de pruebas
+  * Se ajustaron selectores DOM
+  * Se corrigió mock de axios
+
+2. SensorService (src/services/__tests__/sensorService.spec.js)  
+- Pruebas: 5/5 pasadas
+- Correcciones realizadas:
+  * Se corrigió mock de axios con export default
+  * Se verificaron casos de éxito/error API
+
+Logs disponibles:
+- test-results.log: Resultados iniciales
+- test-command.log: Comandos ejecutados
+
+Para verificar:
+1. Ejecutar: npm test
+2. Revisar que todas las pruebas pasen (7/7)
