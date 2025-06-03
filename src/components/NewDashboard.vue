@@ -1,6 +1,25 @@
 <template>
+  <!-- Componente principal del dashboard - Estructura Vuetify -->
+  <!-- 
+    Estructura jerárquica:
+    1. v-app: Contenedor raíz de Vuetify
+      1.1 v-app-bar: Barra superior de navegación
+      1.2 v-navigation-drawer: Panel lateral desplegable
+      1.3 v-main: Área de contenido principal
+        1.3.1 v-container: Contenedor responsive
+          1.3.1.1 v-row/v-col: Sistema de grillas
+            1.3.1.1.1 v-card: Tarjetas de KPIs
+            1.3.1.1.2 v-subheader: Títulos de sección
+            1.3.1.1.3 Gráficos y timeline
+  -->
   <v-app>
-    <!-- AppBar superior -->
+    <!-- Barra superior (AppBar) -->
+    <!-- Contiene:
+      - Icono para abrir/cerrar panel lateral
+      - Título de la aplicación
+      - Indicador de estado global
+      - Fecha y hora actual
+    -->
     <v-app-bar app color="green-darken-3" dark>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
       <v-toolbar-title data-test="app-title">
@@ -17,6 +36,10 @@
     </v-app-bar>
 
     <!-- Panel lateral de configuración -->
+    <!-- Controles disponibles:
+     1. Rango de tiempo: Permite seleccionar el periodo de visualización (24h, semana, mes)
+     2. Unidades: Configura las unidades de medida para temperatura y conductividad
+     3. Sensores: Activa/desactiva la visualización de sensores específicos -->
     <v-navigation-drawer v-model="drawer" app temporary>
       <v-list>
         <v-list-item title="Configuración"></v-list-item>

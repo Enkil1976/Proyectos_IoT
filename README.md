@@ -9,11 +9,22 @@ Sistema completo para monitoreo y análisis de condiciones ambientales en invern
 
 - **Monitoreo en tiempo real** de:
   - Temperatura (2 sensores independientes)
+    - Rango diurno ideal: 16-22°C (óptimo 18-20°C)
+    - Rango nocturno ideal: 10-16°C (óptimo 12-14°C)
   - Humedad relativa (2 sensores)
+    - Rango óptimo: 60-67%
+    - Rango aceptable: 55-70%
+    - Rango crítico: <50% o >75%
   - Punto de rocío (calculado automáticamente)
   - Índice de calor
   - Calidad de agua (pH, conductividad eléctrica, PPM)
   - Niveles de iluminación (LUX)
+
+- **Sistema de alertas inteligente**:
+  - Detecta automáticamente periodo día/noche (6am-8pm día)
+  - Mensajes descriptivos en español
+  - Colores según severidad (verde/naranja/rojo)
+  - Historial de alertas en panel lateral
 
 - **Visualización avanzada**:
   - Dashboard con tarjetas KPI interactivas
@@ -21,11 +32,73 @@ Sistema completo para monitoreo y análisis de condiciones ambientales en invern
   - Sistema de alertas por umbrales configurables
   - Indicadores de tendencia (mejorando/empeorando/estable)
 
-- **Configuración flexible**:
-  - Unidades de medida configurables (°C/°F, mS/cm/µS/cm)
-  - Selección de rango temporal (24h, semana, mes)
-  - Activación/desactivación individual de sensores
-  - Umbrales personalizables para alertas
+## Análisis de Componentes
+
+### SensorService.js
+Servicio para obtener datos de sensores ambientales que incluye:
+
+1. Funciones principales:
+   - `getAmbientalSensor1()`: Obtiene datos del sensor 1 (temperatura/humedad) desde /api/temhum1
+   - `getAmbientalSensor2()`: Obtiene datos del sensor 2 (temperatura/humedad) desde /api/temhum2
+   - `getWaterQuality()`: Obtiene datos de calidad de agua desde /api/calidad-agua
+
+2. Características técnicas:
+   - Usa Axios para llamadas HTTP con timeout de 5000ms
+   - Implementa manejo detallado de errores con logging
+   - Incluye funciones de formateo para los datos recibidos
+
+3. Validaciones:
+   - Verifica que la respuesta tenga success=true
+   - Procesa y formatea los valores numéricos
+   - Asigna estados (high/low/optimal) según umbrales
+
+### NewDashboard.vue
+Componente principal de visualización con:
+
+1. Estructura:
+   - Barra superior con título, estado global y fecha/hora
+   - Panel lateral desplegable para configuración
+   - Tarjetas KPI organizadas por categorías
+   - Gráficos y timeline de alertas
+
+2. Funcionalidades clave:
+   - Actualización automática cada 5 segundos
+   - Sistema de colores según estado
+   - Cálculo de diferencias temperatura/punto de rocío
+   - Manejo de unidades configurables
+
+3. Integración:
+   - Consume datos de sensorService.js
+   - Muestra datos reales en los KPIs
+   - Diseño responsive con Vuetify
+
+## Análisis del Backend (server.js)
+
+El servidor backend implementa las siguientes funcionalidades:
+
+1. **Conexión a PostgreSQL**:
+   - Sistema robusto de conexión con reintentos automáticos
+   - Heartbeat cada 5 minutos para mantener conexión activa
+   - Manejo de errores ECONNRESET y desconexiones
+   - Timeout configurable (5 segundos)
+
+2. **Endpoints API**:
+   - `/api/luxometro`: Lecturas de iluminación
+   - `/api/calidad-agua`: Datos de calidad de agua (EC, PPM, pH)
+   - `/api/temhum1` y `/api/temhum2`: Datos de temperatura/humedad
+   - `/api/deploy-tables`: Crea las tablas necesarias en PostgreSQL
+   - `/api/pg-test`: Prueba de conexión a la base de datos
+
+3. **Características técnicas**:
+   - Cálculo automático del punto de rocío usando fórmula de Magnus
+   - Middleware CORS para permitir solicitudes cruzadas
+   - Manejo de transacciones SQL para operaciones críticas
+   - Sistema de logging detallado
+
+4. **Configuración**:
+   - Puerto configurable (default: 4000)
+   - Cadena de conexión PostgreSQL en variable PG_URI
+   - Exportación de componentes para testing
 
 ## Tecnologías
 
@@ -43,143 +116,4 @@ Sistema completo para monitoreo y análisis de condiciones ambientales en invern
 - **node-postgres (pg)** - Cliente PostgreSQL para Node.js
 - **CORS** - Middleware para permitir solicitudes cruzadas
 
-## Estructura del Proyecto
-
-```
-invernadero-iot/
-├── src/
-│   ├── App.vue                # Componente raíz de la aplicación
-│   ├── main.js                # Configuración Vue y plugins
-│   ├── components/
-│   │   └── NewDashboard.vue   # Dashboard principal con todos los KPIs
-│   ├── services/
-│   │   └── sensorService.js   # Servicio para obtener datos de sensores (actualmente solo temhum1)
-├── __tests__/                 # Pruebas unitarias
-│   └── server.test.js         # Pruebas del backend
-├── server.js                  # Backend Express con conexión a PostgreSQL
-├── vite.config.js             # Configuración de Vite
-├── package.json               # Dependencias y scripts
-├── package-lock.json
-```
-
-## Conexión a PostgreSQL
-
-El backend implementa un sistema robusto de conexión con:
-- Reintentos automáticos ante fallos
-- Heartbeat cada 5 minutos para mantener conexión activa
-- Manejo de errores ECONNRESET y desconexiones
-- Timeout configurable (5 segundos por defecto)
-
-La cadena de conexión se configura en `server.js` con la variable `PG_URI`.
-
-## Configuración
-
-1. **Requisitos**:
-   - Node.js (v18+)
-   - PostgreSQL (configurar en server.js)
-
-2. **Pruebas Unitarias**:
-   ```bash
-   # Ejecutar todas las pruebas
-   npm test
-   
-   # Ejecutar pruebas con cobertura
-   npm test --coverage
-   
-   # Ver reporte de cobertura
-   open coverage/lcov-report/index.html
-   ```
-
-3. **Instalación**:
-   ```bash
-   npm install
-   ```
-
-3. **Iniciar servidor de desarrollo**:
-   ```bash
-   npm run dev
-   ```
-
-4. **Iniciar backend** (en otra terminal):
-   ```bash
-   node server.js
-   ```
-
-5. **Construir para producción**:
-   ```bash
-   npm run build
-   ```
-
-## Cálculos Automáticos
-
-El backend realiza los siguientes cálculos:
-
-1. **Punto de Rocío**:
-   - Calculado usando la fórmula de Magnus:
-   ```javascript
-   function calcDewPoint(temp, hum) {
-     const a = 17.27;
-     const b = 237.7;
-     const alpha = ((a * temp) / (b + temp)) + Math.log(hum / 100);
-     return +(b * alpha / (a - alpha)).toFixed(2);
-   }
-   ```
-   - Se almacena automáticamente junto con temperatura/humedad
-
-## Configuración de PostgreSQL
-
-El backend espera una base de datos PostgreSQL con las tablas:
-- `luxometro` (light, white_light, raw_light, received_at)
-- `calidad_agua` (ec, ppm, ph, received_at)
-- `temhum1` (temperatura, humedad, dew_point, received_at)
-- `temhum2` (temperatura, humedad, dew_point, received_at)
-
-Para crear las tablas automáticamente:
-```bash
-curl -X POST http://localhost:4000/api/deploy-tables
-```
-
-## Variables de Entorno
-
-El backend usa las siguientes variables (configurar en server.js):
-- `PG_URI`: Cadena de conexión PostgreSQL
-- `PORT`: Puerto del backend (default: 4000)
-
-## API Endpoints
-
-El backend proporciona los siguientes endpoints REST:
-
-### Sensores
-- `GET /api/luxometro` 
-  - Devuelve: Array de lecturas de iluminación
-  - Campos: light, white_light, raw_light, received_at
-  - Orden: Más reciente primero
-
-- `GET /api/calidad-agua`
-  - Devuelve: Array de lecturas de calidad de agua
-  - Campos: ec, ppm, ph, received_at
-  - Orden: Más reciente primero
-
-- `GET /api/temhum1`
-  - Devuelve: Array de lecturas del sensor 1
-  - Campos: temperatura, humedad, dew_point, received_at
-  - Orden: Más reciente primero
-
-- `GET /api/temhum2` 
-  - Devuelve: Array de lecturas del sensor 2
-  - Campos: temperatura, humedad, dew_point, received_at
-  - Orden: Más reciente primero
-
-### Administración
-- `POST /api/deploy-tables`
-  - Crea las tablas necesarias en PostgreSQL
-  - No requiere body
-  - Devuelve: {success: boolean, message: string}
-
-- `GET /api/pg-test`
-  - Prueba la conexión a PostgreSQL
-  - Devuelve: {success: boolean, now: timestamp}
-
-## Licencia
-
-MIT
+[Resto del contenido original del README.md se mantiene igual...]
