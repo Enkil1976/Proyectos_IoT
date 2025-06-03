@@ -8,9 +8,18 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src')
     }
   },
-  plugins: [vue()],
+  plugins: [vue({
+    template: {
+      compilerOptions: {
+        isCustomElement: (tag) => tag.includes('chart-')
+      }
+    }
+  })],
   server: {
-    port: 5173
+    port: 5173,
+    headers: {
+      "Content-Security-Policy": "default-src 'self' http://localhost:5173; script-src 'self' http://localhost:5173 'unsafe-inline'; style-src 'self' http://localhost:5173 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:4000 http://localhost:5173; font-src 'self'; frame-src 'none'; worker-src 'none'"
+    }
   },
   test: {
     globals: true,

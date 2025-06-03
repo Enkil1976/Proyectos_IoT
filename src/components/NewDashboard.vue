@@ -185,7 +185,7 @@
                 <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
               </v-card-title>
               <v-card-text>
-                <v-progress-linear :model-value="kpi.value" :max="14" :color="kpi.trendColor"></v-progress-linear>
+                <v-progress-linear v-if="kpi.trend" :model-value="kpi.trendValue" :color="kpi.trendColor"></v-progress-linear>
                 <div class="text-caption mt-2">{{ kpi.statusText }}</div>
               </v-card-text>
             </v-card>

@@ -82,6 +82,7 @@ export const getAmbientalSensor2 = async () => {
 export const getWaterQuality = async () => {
   try {
     console.log(`Haciendo request a: ${API_BASE_URL}/calidad-agua`);
+    const startTime = Date.now();
     const response = await axios.get(`${API_BASE_URL}/calidad-agua`, {
       timeout: 5000,
       headers: {
@@ -94,7 +95,10 @@ export const getWaterQuality = async () => {
     
     console.log('Respuesta calidad-agua:', {
       status: response.status,
-      data: response.data
+      statusText: response.statusText,
+      duration: `${Date.now() - startTime}ms`,
+      data: response.data,
+      headers: response.headers
     });
 
     if (!response.data?.success) {

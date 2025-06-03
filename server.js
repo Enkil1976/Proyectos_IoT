@@ -87,7 +87,7 @@ app.post('/api/deploy-tables', async (req, res) => {
     CREATE TABLE IF NOT EXISTS calidad_agua (
         id SERIAL PRIMARY KEY,
         ec FLOAT,
-        pph FLOAT, -- Cambiar a ppm en la próxima migración
+        ppm FLOAT,
         ph FLOAT,
         received_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -131,8 +131,15 @@ app.get('/api/luxometro', async (req, res) => {
 
 app.get('/api/calidad-agua', async (req, res) => {
   try {
-    const result = await client.query('SELECT * FROM calidad_agua ORDER BY received_at DESC');
-    res.json({ success: true, data: result.rows });
+    const result = await client.query('SELECT id, ec, ppm, ph, received_at FROM calidad_agua ORDER BY received_at DESC');
+    console.log('Datos de calidad-agua:', result.rows);
+    res.json({ 
+      success: true, 
+      data: result.rows.map(row => ({
+        ...row,
+        ppm: row.ppm || 0 // Asegurar que siempre haya valor
+      }))
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
