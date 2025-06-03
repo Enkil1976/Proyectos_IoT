@@ -130,7 +130,7 @@ El backend realiza los siguientes cálculos:
 
 El backend espera una base de datos PostgreSQL con las tablas:
 - `luxometro` (light, white_light, raw_light, received_at)
-- `calidad_agua` (ec, ppm, ph, received_at) 
+- `calidad_agua` (ec, ppm, ph, received_at)
 - `temhum1` (temperatura, humedad, dew_point, received_at)
 - `temhum2` (temperatura, humedad, dew_point, received_at)
 

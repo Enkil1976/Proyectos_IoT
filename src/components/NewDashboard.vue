@@ -308,10 +308,10 @@ export default {
         this.sensorData = {
           sensor1: formatSensorData(data1[0]),
           sensor2: formatSensorData(data2[0]),
-          water: waterData[0]
+          water: waterData[0] // Usa el formato de formatWaterQualityData
         };
 
-        console.log('Estructura completa de sensorData:', this.sensorData);
+        console.log('Datos de calidad de agua formateados:', this.sensorData.water);
         
         // Actualizamos los KPIs con datos reales
         this.kpis = this.kpis.map(kpi => {
@@ -334,13 +334,29 @@ export default {
             return {...kpi, value: this.sensorData.sensor2.dewPoint};
           }
           if (kpi.name === 'pH') {
-            return {...kpi, value: this.sensorData.water.ph};
+            return {
+              ...kpi, 
+              value: this.sensorData.water.ph,
+              status: this.sensorData.water.status.ph,
+              statusText: `pH ${this.sensorData.water.status.ph === 'optimal' ? 'óptimo' : this.sensorData.water.status.ph === 'high' ? 'alto' : 'bajo'}`
+            };
           }
           if (kpi.name === 'EC') {
-            return {...kpi, value: this.sensorData.water.ec};
+            return {
+              ...kpi, 
+              value: this.sensorData.water.conductivity,
+              unit: this.ecUnit,
+              status: this.sensorData.water.status.ppm, // Usamos status de PPM para EC
+              statusText: `Conductividad ${this.sensorData.water.status.ppm === 'optimal' ? 'óptima' : this.sensorData.water.status.ppm === 'high' ? 'alta' : 'baja'}`
+            };
           }
           if (kpi.name === 'PPM') {
-            return {...kpi, value: this.sensorData.water.pph}; // Mapear pph a PPM
+            return {
+              ...kpi, 
+              value: this.sensorData.water.ppm,
+              status: this.sensorData.water.status.ppm,
+              statusText: `PPM ${this.sensorData.water.status.ppm === 'optimal' ? 'óptimos' : this.sensorData.water.status.ppm === 'high' ? 'altos' : 'bajos'}`
+            };
           }
           return kpi;
         });

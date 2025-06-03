@@ -101,7 +101,7 @@ export const getWaterQuality = async () => {
       throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
     }
 
-    return response.data.data;
+    return formatWaterQualityData(response.data.data);
   } catch (error) {
     console.error('Error en getWaterQuality:', {
       message: error.message,
@@ -111,6 +111,25 @@ export const getWaterQuality = async () => {
     });
     throw error;
   }
+};
+
+export const formatWaterQualityData = (waterData) => {
+  console.log('Datos de calidad de agua recibidos:', waterData);
+  
+  const formatted = waterData.map(item => ({
+    id: item.id,
+    conductivity: parseFloat(item.ec).toFixed(2),
+    ppm: parseInt(item.ppm),
+    ph: parseFloat(item.ph).toFixed(1),
+    timestamp: new Date(item.received_at),
+    status: {
+      ph: item.ph > 6.5 ? 'high' : item.ph < 5.5 ? 'low' : 'optimal',
+      ppm: item.ppm > 1800 ? 'high' : item.ppm < 1500 ? 'low' : 'optimal'
+    }
+  }));
+
+  console.log('Datos de calidad de agua formateados:', formatted);
+  return formatted;
 };
 
 export const formatSensorData = (sensorData) => {
