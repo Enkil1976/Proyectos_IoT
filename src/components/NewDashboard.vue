@@ -95,8 +95,8 @@
                     <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
                   </v-card-title>
                   <v-card-text>
-                    <v-progress-linear v-if="kpi.trend" :model-value="kpi.trendValue" :color="kpi.trendColor"></v-progress-linear>
-                    <div class="text-caption mt-2">{{ kpi.statusText }}</div>
+                    <v-progress-linear :model-value="kpi.value" :max="100" :color="kpi.trendColor"></v-progress-linear>
+                    <div class="text-caption mt-2" data-test="status-text">{{ kpi.statusText }}</div>
                   </v-card-text>
                 </v-card>
               </v-col>
@@ -117,7 +117,7 @@
                     <v-chip>{{ kpi.value }} {{ kpi.unit }}</v-chip>
                   </v-card-title>
                   <v-card-text>
-                    <v-progress-linear v-if="kpi.trend" :model-value="kpi.trendValue" :color="kpi.trendColor"></v-progress-linear>
+                    <v-progress-linear :model-value="kpi.value" :max="100" :color="kpi.trendColor"></v-progress-linear>
                     <div class="text-caption mt-2">{{ kpi.statusText }}</div>
                   </v-card-text>
                 </v-card>
@@ -345,10 +345,28 @@ export default {
             return {...kpi, value: this.sensorData.sensor2.temperatura};
           }
           if (kpi.name === 'Humedad 1') {
-            return {...kpi, value: this.sensorData.sensor1.humedad};
+            const value = this.sensorData.sensor1.humedad;
+            let statusText = 'Óptima';
+            if (value < 45 || value > 80) statusText = value < 45 ? 'Muy baja' : 'Muy alta';
+            else if (value < 55 || value > 70) statusText = value < 55 ? 'Baja' : 'Alta';
+            return {
+              ...kpi, 
+              value, 
+              statusText,
+              status: this.getStatusColor(null, value, kpi.name)
+            };
           }
           if (kpi.name === 'Humedad 2') {
-            return {...kpi, value: this.sensorData.sensor2.humedad};
+            const value = this.sensorData.sensor2.humedad;
+            let statusText = 'Óptima';
+            if (value < 45 || value > 80) statusText = value < 45 ? 'Muy baja' : 'Muy alta';
+            else if (value < 55 || value > 70) statusText = value < 55 ? 'Baja' : 'Alta';
+            return {
+              ...kpi, 
+              value, 
+              statusText,
+              status: this.getStatusColor(null, value, kpi.name)
+            };
           }
           if (kpi.name === 'DewPoint 1') {
             return {...kpi, value: this.sensorData.sensor1.dewPoint};
@@ -411,8 +429,8 @@ export default {
       
       // Lógica para humedad
       if (name && name.includes('Humedad')) {
-        if (Math.abs(value - 63) > 10) return 'red';
-        if (Math.abs(value - 63) > 5) return 'orange';
+        if (value < 45 || value > 80) return 'red';
+        if (value < 55 || value > 70) return 'orange';
         return 'green';
       }
 
@@ -427,7 +445,9 @@ export default {
   mounted() {
     this.fetchSensorData();
     // Actualizar datos cada 5 segundos
-    this.updateInterval = setInterval(this.fetchSensorData, 5000);
+    this.updateInterval = setInterval(() => {
+      this.fetchSensorData();
+    }, 5000);
   },
   beforeUnmount() {
     clearInterval(this.updateInterval);
