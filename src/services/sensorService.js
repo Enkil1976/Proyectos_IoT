@@ -141,7 +141,7 @@ export const formatSensorData = (sensorData) => {
   const formatted = {
     temperatura: parseFloat(sensorData.temperatura).toFixed(1),
     humedad: parseFloat(sensorData.humedad).toFixed(1),
-    dewPoint: parseFloat(sensorData.dew_point).toFixed(1),
+    dew_point: parseFloat(sensorData.dew_point).toFixed(1),
     timestamp: new Date(sensorData.received_at)
   };
   console.log('Datos formateados:', formatted);
