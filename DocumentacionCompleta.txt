@@ -1,0 +1,98 @@
+# Documentación Completa del Sistema Invernadero IoT
+
+## 1. README.md (Visión General)
+- **Propósito**: Documentación principal del proyecto con visión general
+- **Contenido**:
+  - Descripción del sistema completo
+  - Características principales
+  - Análisis de componentes técnicos
+  - Tecnologías utilizadas (frontend y backend)
+
+## 2. sensorService.js (Servicio Backend)
+- **Propósito**: Obtener y formatear datos de sensores ambientales
+- **Funciones principales**:
+  - `getAmbientalSensor1()`: Obtiene datos del sensor 1 (temperatura/humedad)
+    - Endpoint: /api/temhum1
+    - Timeout: 5000ms
+    - Manejo detallado de errores
+  - `getAmbientalSensor2()`: Obtiene datos del sensor 2 (temperatura/humedad)
+    - Endpoint: /api/temhum2
+    - Misma estructura que sensor 1
+  - `getWaterQuality()`: Obtiene datos de calidad de agua
+    - Endpoint: /api/calidad-agua
+    - Formatea datos (conductividad, ppm, ph)
+  - Funciones de formateo:
+    - `formatSensorData()`: Formatea datos de temperatura/humedad
+    - `formatWaterQualityData()`: Procesa datos de calidad de agua
+
+## 3. sensorStore.js (Store Pinia)
+- **Propósito**: Manejar el estado global de los sensores
+- **Estructura**:
+  - Estado:
+    - `temperatureHumidityData`: Array con datos de sensores
+    - `loading`: Estado de carga
+    - `error`: Mensaje de error
+  - Acciones:
+    - `fetchTemperatureHumidityData()`: Obtiene datos de ambos sensores
+      - Usa Promise.all para llamadas paralelas
+      - Combina y ordena datos
+      - Manejo de errores con logging
+  - Funciones auxiliares:
+    - `calcDewPoint()`: Calcula punto de rocío (no mostrada en código)
+
+## 4. NewDashboard.vue (Componente Frontend)
+- **Propósito**: Dashboard principal de visualización
+- **Estructura Template**:
+  - `v-app`: Contenedor raíz Vuetify
+    - `v-app-bar`: Barra superior con título y estado
+    - `v-navigation-drawer`: Panel lateral de configuración
+    - `v-main`: Área de contenido principal
+      - Secciones:
+        - Tarjetas KPI (Temperatura, Humedad, Punto de Rocío, Índice de Calor)
+        - Tarjetas Calidad de Agua (pH, EC, PPM)
+        - Tarjetas Iluminación (LUX)
+        - Gráficos y timeline de alertas
+
+- **Script**:
+  - Data:
+    - `sensorData`: Almacena datos crudos de sensores
+    - `kpis`: Array con métricas clave
+    - `alerts`: Array de alertas recientes
+    - Configuraciones (unidades, rangos de tiempo)
+  - Métodos:
+    - `fetchSensorData()`: Obtiene y actualiza datos de sensores
+    - `getStatusColor()`: Lógica de colores según estado
+  - Ciclo de vida:
+    - `mounted()`: Inicia polling cada 5 segundos
+    - `beforeUnmount()`: Limpia intervalo
+
+- **Estilos**:
+  - Efectos hover en tarjetas
+  - Transiciones suaves
+
+## Flujo de Datos Completo
+1. Frontend (NewDashboard.vue) llama a sensorStore.js
+2. sensorStore.js usa sensorService.js para obtener datos
+3. sensorService.js hace requests HTTP al backend
+4. Datos fluyen de vuelta a través de la misma cadena
+5. NewDashboard.vue renderiza los datos formateados
+
+## Variables Clave
+- `temperatureHumidityData`: Almacena datos combinados de sensores
+- `kpis`: Contiene métricas formateadas para visualización
+- `globalStatus`: Estado general del sistema (optimal/warning/critical)
+
+## Umbrales y Lógica de Estado
+- Temperatura:
+  - Óptimo: 18-20°C (día), 12-14°C (noche)
+  - Aceptable: 16-22°C (día), 10-16°C (noche)
+- Humedad:
+  - Óptimo: 60-67%
+  - Aceptable: 55-70%
+  - Crítico: <50% o >75%
+- Punto de Rocío:
+  - Alerta si diferencia con temperatura <= 2°C
+- pH Agua:
+  - Óptimo: 5.5-6.5
+  - Alto: >6.5
+  - Bajo: <5.5

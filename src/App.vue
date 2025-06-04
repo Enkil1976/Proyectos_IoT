@@ -8,7 +8,7 @@
 </template>
 
 <script setup>
-import NewDashboard from './components/NewDashboard.vue';
+import NewDashboard from './components/NewDashboard/NewDashboard.vue';
 </script>
 
 <style>

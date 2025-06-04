@@ -8,14 +8,22 @@ export const getAmbientalSensor1 = async () => {
   try {
     console.log(`Haciendo request a: ${API_BASE_URL}/temhum1`);
     const response = await axios.get(`${API_BASE_URL}/temhum1`, {
-      timeout: 5000,
+      timeout: 10000,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
       withCredentials: false
+    }).catch(error => {
+      if (error.code === 'ECONNABORTED') {
+        console.warn('Timeout excedido, devolviendo null');
+        return null;
+      }
+      throw error;
     });
+
+    if (!response) return null;
     
     console.log('Respuesta del API:', {
       status: response.status,
@@ -46,14 +54,22 @@ export const getAmbientalSensor2 = async () => {
   try {
     console.log(`Haciendo request a: ${API_BASE_URL}/temhum2`);
     const response = await axios.get(`${API_BASE_URL}/temhum2`, {
-      timeout: 5000,
+      timeout: 10000,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
       withCredentials: false
+    }).catch(error => {
+      if (error.code === 'ECONNABORTED') {
+        console.warn('Timeout excedido, devolviendo null');
+        return null;
+      }
+      throw error;
     });
+
+    if (!response) return null;
     
     console.log('Respuesta del API:', {
       status: response.status,
@@ -84,14 +100,22 @@ export const getWaterQuality = async () => {
     console.log(`Haciendo request a: ${API_BASE_URL}/calidad-agua`);
     const startTime = Date.now();
     const response = await axios.get(`${API_BASE_URL}/calidad-agua`, {
-      timeout: 5000,
+      timeout: 10000,
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*'
       },
       withCredentials: false
+    }).catch(error => {
+      if (error.code === 'ECONNABORTED') {
+        console.warn('Timeout excedido, devolviendo null');
+        return null;
+      }
+      throw error;
     });
+
+    if (!response) return null;
     
     console.log('Respuesta calidad-agua:', {
       status: response.status,

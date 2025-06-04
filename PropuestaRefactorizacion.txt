@@ -1,0 +1,114 @@
+# Propuesta de Refactorización para Separar Vista y Controlador
+
+## Estructura Propuesta
+
+src/
+├── components/
+│   ├── NewDashboard/          # Carpeta para componentes del dashboard
+│   │   ├── KpiCard.vue        # Componente individual para tarjetas KPI
+│   │   ├── SensorConfig.vue   # Panel de configuración de sensores  
+│   │   ├── ChartsContainer.vue # Contenedor de gráficos
+│   │   ├── AlertsTimeline.vue  # Timeline de alertas
+│   │   └── NewDashboard.vue    # Componente principal reducido
+│
+├── composables/              # Lógica reutilizable
+│   ├── useSensorData.js      # Manejo de datos de sensores
+│   └── useStatusLogic.js     # Cálculos de estado y colores
+│
+├── stores/                   # Pinia stores (se mantiene igual)
+└── services/                 # Services (se mantiene igual)
+
+## Cambios Clave
+
+1. NewDashboard.vue reducido (solo estructura básica):
+```vue
+<template>
+  <v-app>
+    <AppHeader />
+    <SensorConfig />
+    <main>
+      <KpiSection />
+      <ChartsSection />
+      <AlertsSection />
+    </main>
+  </v-app>
+</template>
+```
+
+2. useSensorData.js (composable):
+```js
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useSensorStore } from '@/stores/sensorStore'
+
+export function useSensorData(interval = 5000) {
+  const store = useSensorStore()
+  const intervalId = ref(null)
+  
+  const fetchData = async () => {
+    await store.fetchTemperatureHumidityData()
+  }
+
+  onMounted(() => {
+    fetchData()
+    intervalId.value = setInterval(fetchData, interval)
+  })
+
+  onUnmounted(() => {
+    clearInterval(intervalId.value)
+  })
+
+  return {
+    temperatureHumidityData: store.temperatureHumidityData,
+    loading: store.loading,
+    error: store.error
+  }
+}
+```
+
+3. KpiCard.vue (componente reutilizable):
+```vue
+<template>
+  <v-card :color="statusColor">
+    <v-card-title>
+      <v-icon left>{{ icon }}</v-icon>
+      {{ title }}
+      <v-chip>{{ value }} {{ unit }}</v-chip>
+    </v-card-title>
+    <v-card-text>
+      <v-progress-linear :model-value="trendValue" :color="trendColor" />
+      <div class="text-caption">{{ statusText }}</div>
+    </v-card-text>
+  </v-card>
+</template>
+
+<script setup>
+defineProps({
+  title: String,
+  value: [String, Number],
+  unit: String,
+  icon: String,
+  statusColor: String,
+  trendValue: Number,
+  trendColor: String,
+  statusText: String
+})
+</script>
+```
+
+## Beneficios Esperados
+
+1. Mejor organización del código
+2. Componentes más reutilizables
+3. Lógica de negocio separada de la vista
+4. Más fácil de testear
+5. Archivos más pequeños y manejables
+
+## Pasos para Implementar
+
+1. Crear nueva estructura de carpetas
+2. Extraer componentes uno por uno
+3. Mover lógica a composables
+4. Actualizar imports y referencias
+5. Verificar que todo funcione correctamente
+
+¿Te gustaría que implemente alguno de estos cambios específicamente?

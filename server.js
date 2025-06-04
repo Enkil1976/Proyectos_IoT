@@ -1,8 +1,17 @@
-// Simple Express backend with PostgreSQL connection (no MQTT)
+// Simple Express backend with PostgreSQL and Redis
 const express = require('express');
 const { Client } = require('pg');
+const { createClient } = require('redis');
 const cors = require('cors');
 const fs = require('fs');
+
+// Configurar Redis
+const redisClient = createClient({
+  url: 'redis://localhost:6379'
+});
+
+redisClient.on('error', err => console.error('Redis Client Error', err));
+redisClient.connect().then(() => console.log('✅ Conexión exitosa a Redis'));
 
 const app = express();
 app.use(cors());
@@ -121,43 +130,83 @@ app.post('/api/deploy-tables', async (req, res) => {
 
 // API endpoints para consultar datos históricos desde PostgreSQL
 app.get('/api/luxometro', async (req, res) => {
+  const cacheKey = 'luxometro:latest';
   try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.json({ success: true, data: JSON.parse(cachedData), cached: true });
+    }
+
     const result = await client.query('SELECT * FROM luxometro ORDER BY received_at DESC');
-    res.json({ success: true, data: result.rows });
+    const data = result.rows;
+    await redisClient.setEx(cacheKey, 10, JSON.stringify(data));
+    
+    res.json({ success: true, data, cached: false });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.get('/api/calidad-agua', async (req, res) => {
+  const cacheKey = 'calidad-agua:latest';
   try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.json({ 
+        success: true, 
+        data: JSON.parse(cachedData), 
+        cached: true 
+      });
+    }
+
     const result = await client.query('SELECT id, ec, ppm, ph, received_at FROM calidad_agua ORDER BY received_at DESC');
-    console.log('Datos de calidad-agua:', result.rows);
-    res.json({ 
-      success: true, 
-      data: result.rows.map(row => ({
-        ...row,
-        ppm: row.ppm || 0 // Asegurar que siempre haya valor
-      }))
-    });
+    const data = result.rows.map(row => ({
+      ...row,
+      ppm: row.ppm || 0 // Asegurar que siempre haya valor
+    }));
+    
+    await redisClient.setEx(cacheKey, 10, JSON.stringify(data));
+    res.json({ success: true, data, cached: false });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.get('/api/temhum1', async (req, res) => {
+  const cacheKey = 'temhum1:latest';
   try {
+    // Intentar obtener datos de caché
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.json({ success: true, data: JSON.parse(cachedData), cached: true });
+    }
+
+    // Si no hay caché, consultar PostgreSQL
     const result = await client.query('SELECT * FROM temhum1 ORDER BY received_at DESC');
-    res.json({ success: true, data: result.rows });
+    const data = result.rows;
+    
+    // Guardar en caché con TTL de 10 segundos
+    await redisClient.setEx(cacheKey, 10, JSON.stringify(data));
+    
+    res.json({ success: true, data, cached: false });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
 app.get('/api/temhum2', async (req, res) => {
+  const cacheKey = 'temhum2:latest';
   try {
+    const cachedData = await redisClient.get(cacheKey);
+    if (cachedData) {
+      return res.json({ success: true, data: JSON.parse(cachedData), cached: true });
+    }
+
     const result = await client.query('SELECT * FROM temhum2 ORDER BY received_at DESC');
-    res.json({ success: true, data: result.rows });
+    const data = result.rows;
+    await redisClient.setEx(cacheKey, 10, JSON.stringify(data));
+    
+    res.json({ success: true, data, cached: false });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
