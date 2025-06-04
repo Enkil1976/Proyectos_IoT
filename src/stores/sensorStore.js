@@ -10,13 +10,14 @@ import {
 export const useSensorStore = defineStore('sensor', () => {
   const temperatureHumidityData = ref([])
   const waterQualityData = ref(null)
-  const loading = ref(false)
   const error = ref(null)
 
   const fetchTemperatureHumidityData = async () => {
     try {
-      loading.value = true
       error.value = null
+      
+      // Mantener datos anteriores mientras se cargan nuevos
+      const previousData = [...temperatureHumidityData.value]
       
       // Forzar datos demo si la API no responde
       let sensor1Data = []
@@ -24,38 +25,54 @@ export const useSensorStore = defineStore('sensor', () => {
       
       try {
         const sensor1Response = await getAmbientalSensor1();
-        sensor1Data = sensor1Response?.success ? sensor1Response.data : [];
         const sensor2Response = await getAmbientalSensor2();
-        sensor2Data = sensor2Response?.success ? sensor2Response.data : [];
+        
+      // Respuestas API comentadas para producción
+        
+        if (!sensor1Response || !sensor2Response) {
+          throw new Error('Una o ambas respuestas de API son undefined');
+        }
+
+        sensor1Data = Array.isArray(sensor1Response) ? sensor1Response : [];
+        sensor2Data = Array.isArray(sensor2Response) ? sensor2Response : [];
         
         if (sensor1Data.length === 0 && sensor2Data.length === 0) {
-          // Datos demo
-          const now = new Date()
+          console.warn('API devolvió arrays vacíos, usando datos demo');
+          // Datos demo de respaldo
+          const now = new Date();
           sensor1Data = [{
+            id: 1,
             temperatura: 18.4,
             humedad: 68,
             dew_point: 12.4,
             received_at: now.toISOString()
-          }]
+          }];
           sensor2Data = [{
+            id: 2,
             temperatura: 19.1,
             humedad: 65,
             dew_point: 12.7,
             received_at: now.toISOString()
-          }]
-          console.warn('Usando datos demo - API no devolvió datos')
+          }];
+        } else if (sensor1Data.length === 0 || sensor2Data.length === 0) {
+          console.warn('Advertencia: Uno de los sensores devolvió array vacío');
         }
       } catch (error) {
-        console.error('Error fetching sensor data, using demo data', error)
+        console.error('Error obteniendo datos de sensores, usando datos demo:', error.message);
+      if (error.code === 'ECONNABORTED') {
+        console.warn('Timeout excedido al conectar con el API');
+      }
         // Datos demo de respaldo
         const now = new Date()
         sensor1Data = [{
+          id: 1,
           temperatura: 18.4,
           humedad: 68,
           dew_point: 12.4,
           received_at: now.toISOString()
         }]
         sensor2Data = [{
+          id: 2,
           temperatura: 19.1,
           humedad: 65,
           dew_point: 12.7,
@@ -63,58 +80,74 @@ export const useSensorStore = defineStore('sensor', () => {
         }]
       }
 
-      console.log('--- RAW API RESPONSE ---')
-      console.log('Sensor 1:', sensor1Data)
-      console.log('Sensor 2:', sensor2Data)
+      // Logs de respuesta API cruda comentados para producción
 
-      const formatData = (data, sensorId) => {
-        if (!Array.isArray(data)) {
-          console.error(`Datos del sensor ${sensorId} no son un array:`, data)
-          return []
-        }
+  const formatData = (data, sensorId) => {
+    if (!Array.isArray(data)) {
+      console.error(`Datos del sensor ${sensorId || 'desconocido'} no son un array:`, data)
+      return []
+    }
 
-        const filtered = data.filter(item => {
-          const isValid = item && 
-                        item.temperatura !== undefined && 
-                        item.humedad !== undefined
-          
-          if (!isValid) {
-            console.warn(`Item inválido en sensor ${sensorId}:`, item)
-          }
-          return isValid
-        })
+    const filtered = data.filter(item => {
+      const isValid = item && 
+                    item.temperatura !== undefined && 
+                    item.humedad !== undefined &&
+                    item.dew_point !== undefined
+      
+      if (!isValid) {
+        console.warn(`Item inválido en sensor ${sensorId || 'desconocido'}:`, item)
+      }
+      return isValid
+    })
 
-        const formatted = filtered.map(item => {
-          const formattedItem = formatSensorData({
-            ...item,
-            sensor_id: sensorId,
-            received_at: item.received_at || new Date().toISOString()
-          })
-          console.log(`Item formateado sensor ${sensorId}:`, formattedItem)
-          return formattedItem
-        })
+      const formatted = filtered.map(item => {
+      const formattedItem = formatSensorData({
+        ...item,
+        sensor_id: {
+          id: sensorId.apiId,
+          name: sensorId.name
+        },
+        received_at: item.received_at || new Date().toISOString(),
+        dew_point: item.dew_point
+      })
+      return formattedItem
+    })
 
         return formatted
       }
-      const formatted1 = formatData(sensor1Data, 1)
-      const formatted2 = formatData(sensor2Data, 2)
-      temperatureHumidityData.value = [
+      // IDs hardcodeados según configuración física de sensores
+      // Sensor 1: Temperatura/Humedad principal
+      // Sensor 2: Temperatura/Humedad secundario
+      // Definición clara de los sensores
+      const sensorDefinitions = {
+        1: { apiId: 'temhum1', name: 'Principal' },
+        2: { apiId: 'temhum2', name: 'Secundario' }
+      }
+      
+      const formatted1 = formatData(sensor1Data, sensorDefinitions[1])
+      const formatted2 = formatData(sensor2Data, sensorDefinitions[2])
+      // Combinar datos nuevos con anteriores si existen
+      const newData = [
         ...formatted1,
         ...formatted2
-      ].sort((a, b) => new Date(b.received_at) - new Date(a.received_at))
-      console.log('Datos formateados y ordenados:', temperatureHumidityData.value)
+      ]
+      
+      // Mantener datos anteriores si no hay nuevos
+      temperatureHumidityData.value = newData.length > 0 
+        ? newData.sort((a, b) => new Date(b.received_at) - new Date(a.received_at))
+        : previousData
+      // Log de datos finales comentado para producción
 
     } catch (err) {
       error.value = err.message
-      console.error('Error fetching sensor data:', err)
+      console.error('Error obteniendo datos de sensores')
     } finally {
-      loading.value = false
+      // loading eliminado
     }
   }
 
   const fetchWaterQualityData = async () => {
     try {
-      loading.value = true
       error.value = null
       
       const data = await getWaterQuality()
@@ -129,14 +162,13 @@ export const useSensorStore = defineStore('sensor', () => {
       error.value = err.message
       console.error('Error fetching water quality data:', err)
     } finally {
-      loading.value = false
+      // loading eliminado
     }
   }
 
   return {
     temperatureHumidityData,
     waterQualityData,
-    loading,
     error,
     fetchTemperatureHumidityData,
     fetchWaterQualityData
