@@ -29,6 +29,7 @@ export function useSensorData(interval = 5000) {
   }
 }
 
+
 export function useWaterQualityData(interval = 5000) {
   const store = useSensorStore()
   const intervalId = ref(null)

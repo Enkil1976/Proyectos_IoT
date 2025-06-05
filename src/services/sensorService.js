@@ -6,7 +6,7 @@ console.log(`Configurando servicio con URL base: ${API_BASE_URL}`);
 
 export const getAmbientalSensor1 = async () => {
   try {
-    console.log(`Haciendo request a: ${API_BASE_URL}/temhum1`);
+    //console.log(`Haciendo request a: ${API_BASE_URL}/temhum1`);
     const response = await axios.get(`${API_BASE_URL}/temhum1`, {
       timeout: 10000,
       headers: {
@@ -25,10 +25,10 @@ export const getAmbientalSensor1 = async () => {
 
     if (!response) return null;
     
-    console.log('Respuesta del API:', {
+    /* console.log('Respuesta del API:', {
       status: response.status,
       data: response.data
-    });
+    }); */
 
     if (!response.data?.success) {
       throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
@@ -52,7 +52,7 @@ export const getAmbientalSensor1 = async () => {
 // Formatear datos para gráficos
 export const getAmbientalSensor2 = async () => {
   try {
-    console.log(`Haciendo request a: ${API_BASE_URL}/temhum2`);
+    //console.log(`Haciendo request a: ${API_BASE_URL}/temhum2`);
     const response = await axios.get(`${API_BASE_URL}/temhum2`, {
       timeout: 10000,
       headers: {
@@ -71,10 +71,10 @@ export const getAmbientalSensor2 = async () => {
 
     if (!response) return null;
     
-    console.log('Respuesta del API:', {
+    /* console.log('Respuesta del API:', {
       status: response.status,
       data: response.data
-    });
+    }); */
 
     if (!response.data?.success) {
       throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
@@ -156,18 +156,18 @@ export const formatWaterQualityData = (waterData) => {
     }
   }));
 
-  console.log('Datos de calidad de agua formateados:', formatted);
+  //console.log('Datos de calidad de agua formateados:', formatted);
   return formatted;
 };
 
 export const formatSensorData = (sensorData) => {
-  console.log('Datos recibidos para formatear:', sensorData);
+  //console.log('Datos recibidos para formatear:', sensorData);
   const formatted = {
     temperatura: parseFloat(sensorData.temperatura).toFixed(1),
     humedad: parseFloat(sensorData.humedad).toFixed(1),
     dew_point: parseFloat(sensorData.dew_point).toFixed(1),
     timestamp: new Date(sensorData.received_at)
   };
-  console.log('Datos formateados:', formatted);
+  //console.log('Datos formateados:', formatted);
   return formatted;
 };
