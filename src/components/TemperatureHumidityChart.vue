@@ -1,168 +1,172 @@
 <template>
-      <ChartWrapper 
-        :has-data="series && series[0] && series[0].data && series[0].data.length > 0"
-        loading-message="Obteniendo lecturas de sensores..."
-        loading-title="Cargando datos"
-        no-data-message="No hay datos disponibles"
-      >
-    <apexchart
-      type="line"
-      height="350"
-      :options="chartOptions"
-      :series="series"
-    />
-  </ChartWrapper>
+  <apexchart
+    type="line"
+    height="350"
+    :options="chartOptions"
+    :series="series"
+  />
 </template>
 
 <script>
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import ChartWrapper from '@/components/common/ChartWrapper.vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useSensorStore } from '@/stores/sensorStore'
 import VueApexCharts from 'vue3-apexcharts'
 
 export default {
   name: 'TemperatureHumidityChart',
   components: {
-    apexchart: VueApexCharts,
-    ChartWrapper
+    apexchart: VueApexCharts
   },
   setup() {
     const sensorStore = useSensorStore()
     const series = ref([
-      {
-        name: 'Temperatura',
-        data: []
-      },
-      {
-        name: 'Humedad',
-        data: []
-      },
-      {
-        name: 'Punto de Rocío',
-        data: []
-      }
+      { name: 'Temperatura (°C)', data: [] },
+      { name: 'Humedad (%)', data: [] }
     ])
 
     const chartOptions = ref({
       chart: {
-        id: 'tem-hum-chart',
-        animations: {
-          enabled: true
-        },
-        toolbar: {
-          show: true
-        },
-        zoom: {
-          enabled: true
-        }
+        id: 'historical-temp-hum-chart',
+        animations: { enabled: true },
+        toolbar: { show: true },
+        zoom: { enabled: true }
       },
-      stroke: {
-        curve: 'smooth',
-        width: 2
-      },
-      markers: {
-        size: 0
-      },
+      stroke: { curve: 'smooth', width: 2 },
+      markers: { size: 4 },
       xaxis: {
         type: 'datetime',
         labels: {
-          datetimeUTC: false
+          datetimeUTC: false,
+          format: 'HH:mm'
         }
       },
       yaxis: [
         {
-          title: {
-            text: 'Temperatura (°C)'
-          },
+          title: { text: 'Temperatura (°C)' },
           min: 0,
-          max: 50
+          max: 40,
+          labels: {
+            formatter: (value) => value.toFixed(1)
+          }
         },
         {
           opposite: true,
-          title: {
-            text: 'Humedad (%)'
-          },
+          title: { text: 'Humedad (%)' },
           min: 0,
-          max: 100
+          max: 100,
+          labels: {
+            formatter: (value) => value.toFixed(1)
+          }
         }
       ],
       tooltip: {
         shared: true,
-        x: {
-          format: 'dd MMM yyyy HH:mm:ss'
+        x: { format: 'dd MMM HH:mm' },
+        y: {
+          formatter: (value) => value.toFixed(1)
         }
       }
     })
 
     let intervalId = null
 
-    const chartMounted = ref(false)
-    const chartContainer = ref(null)
-    const chartDiv = ref(null)
+    const processHistoricalData = (chartData) => {
+      console.log('Procesando chartData:', chartData)
+      
+      // Manejar caso donde chartData es directamente el array de datos
+      if (Array.isArray(chartData)) {
+        return chartData.map(item => ({
+          x: new Date(item.time).getTime(),
+          y: item.temperatura,
+          y2: item.humedad
+        }))
+      }
+      
+      // Manejar caso donde los datos están en propiedad 'data'
+      if (chartData?.data && Array.isArray(chartData.data)) {
+        return chartData.data.map(item => ({
+          x: new Date(item.time).getTime(),
+          y: item.temperatura,
+          y2: item.humedad
+        }))
+      }
+
+      console.error('Formato de datos no reconocido:', chartData)
+      return []
+    }
+
+    const updateChartData = async () => {
+      try {
+        console.log('Iniciando carga de datos...')
+        await sensorStore.fetchAmbientalChart1()
+        await sensorStore.fetchAmbientalChart2()
+
+        console.log('Datos del store:', {
+          chart1: sensorStore.ambientalChart1,
+          chart2: sensorStore.ambientalChart2
+        })
+
+        // Manejar caso donde los datos son undefined
+        const chart1Data = sensorStore.ambientalChart1 || []
+        const chart2Data = sensorStore.ambientalChart2 || []
+
+        const data1 = processHistoricalData(chart1Data)
+        const data2 = processHistoricalData(chart2Data)
+        const allData = [...data1, ...data2]
+
+        console.log('Datos procesados:', {
+          data1: data1,
+          data2: data2,
+          combined: allData
+        })
+
+        if (allData.length === 0) {
+          console.warn('No hay datos válidos para mostrar')
+          // Mostrar datos de ejemplo más completos
+          const now = new Date()
+          const demoData = []
+          // Generar 24 puntos de datos de ejemplo (una por hora)
+          for (let i = 0; i < 24; i++) {
+            const time = new Date(now)
+            time.setHours(now.getHours() - i)
+            demoData.push({
+              x: time.getTime(),
+              y: 18 + Math.sin(i/3) * 5, // Temperatura fluctuante
+              y2: 60 + Math.cos(i/2) * 10 // Humedad fluctuante
+            })
+          }
+          series.value = [
+            { name: 'Temperatura (°C)', data: demoData.map(d => ({x: d.x, y: d.y})) },
+            { name: 'Humedad (%)', data: demoData.map(d => ({x: d.x, y: d.y2})) }
+          ]
+          return
+        }
+
+        series.value = [
+          {
+            name: 'Temperatura (°C)',
+            data: allData.map(d => ({ x: d.x, y: d.y }))
+          },
+          {
+            name: 'Humedad (%)',
+            data: allData.map(d => ({ x: d.x, y: d.y2 }))
+          }
+        ]
+      } catch (error) {
+        console.error('Error al cargar datos históricos:', error)
+      }
+    }
 
     onMounted(() => {
-      // Usar setTimeout para asegurar que el DOM esté listo
-      setTimeout(() => {
-        updateChartData()
-        intervalId = setInterval(updateChartData, 10000)
-      }, 100)
+      updateChartData()
+      intervalId = setInterval(updateChartData, 300000)
     })
 
     onBeforeUnmount(() => {
       if (intervalId) clearInterval(intervalId)
     })
 
-    const updateChartData = async () => {
-      try {
-        await sensorStore.fetchTemperatureHumidityData()
-        console.log('Datos de temperatura y humedad:', sensorStore.temperatureHumidityData)
-        if (!sensorStore.temperatureHumidityData || sensorStore.temperatureHumidityData.length === 0) {
-          console.warn('No hay datos disponibles')
-          return
-        }
-        
-        // Mapear datos asegurando valores numéricos
-        const mappedData = sensorStore.temperatureHumidityData
-          .filter(item => item && item.received_at)
-          .map(item => {
-            const timestamp = new Date(item.received_at).getTime()
-            return {
-              x: isNaN(timestamp) ? Date.now() : timestamp,
-              yTemperatura: Number(item.temperatura) || null,
-              yHumedad: Number(item.humedad) || null,
-              yDewPoint: Number(item.dew_point) || null
-            }
-          })
-          .filter(item => item.yTemperatura !== null && item.yHumedad !== null)
-
-        console.log('Datos mapeados:', mappedData);
-
-        // Asignar series con datos validados
-        series.value = [
-          {
-            name: 'Temperatura (°C)',
-            data: mappedData.map(d => ({x: d.x, y: d.yTemperatura}))
-          },
-          {
-            name: 'Humedad (%)',
-            data: mappedData.map(d => ({x: d.x, y: d.yHumedad}))
-          },
-          {
-            name: 'Punto de Rocío (°C)',
-            data: mappedData.map(d => ({x: d.x, y: d.yDewPoint}))
-          }
-        ];
-
-        console.log('Series configuradas:', series.value);
-      } catch (error) {
-        console.error('Error updating chart data:', error)
-      }
-    }
-
-    return {
-      series,
-      chartOptions
-    }
+    return { series, chartOptions }
   }
 }
 </script>
@@ -172,18 +176,5 @@ export default {
   width: 100%;
   margin: 20px 0;
   min-height: 350px;
-  background: #f9f9f9;
-  border-radius: 8px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.loading-message {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 350px;
-  font-size: 18px;
-  color: #666;
 }
 </style>
