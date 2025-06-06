@@ -1,173 +1,91 @@
-// Servicio para obtener datos de sensores ambientales
 import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:4000/api';
-console.log(`Configurando servicio con URL base: ${API_BASE_URL}`);
 
-export const getAmbientalSensor1 = async () => {
-  try {
-    //console.log(`Haciendo request a: ${API_BASE_URL}/temhum1`);
-    const response = await axios.get(`${API_BASE_URL}/temhum1`, {
-      timeout: 10000,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      withCredentials: false
-    }).catch(error => {
-      if (error.code === 'ECONNABORTED') {
-        console.warn('Timeout excedido, devolviendo null');
-        return null;
-      }
-      throw error;
-    });
-
-    if (!response) return null;
-    
-    /* console.log('Respuesta del API:', {
-      status: response.status,
-      data: response.data
-    }); */
-
-    if (!response.data?.success) {
-      throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
-    }
-
-    return response.data.data;
-  } catch (error) {
-    console.error('Error detallado en getAmbientalSensor1:', {
-      message: error.message,
-      code: error.code,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method
-      },
-      response: error.response?.data
-    });
-    throw error;
-  }
-};
-
-// Formatear datos para gráficos
-export const getAmbientalSensor2 = async () => {
-  try {
-    //console.log(`Haciendo request a: ${API_BASE_URL}/temhum2`);
-    const response = await axios.get(`${API_BASE_URL}/temhum2`, {
-      timeout: 10000,
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      withCredentials: false
-    }).catch(error => {
-      if (error.code === 'ECONNABORTED') {
-        console.warn('Timeout excedido, devolviendo null');
-        return null;
-      }
-      throw error;
-    });
-
-    if (!response) return null;
-    
-    /* console.log('Respuesta del API:', {
-      status: response.status,
-      data: response.data
-    }); */
-
-    if (!response.data?.success) {
-      throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
-    }
-
-    return response.data.data;
-  } catch (error) {
-    console.error('Error detallado en getAmbientalSensor2:', {
-      message: error.message,
-      code: error.code,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method
-      },
-      response: error.response?.data
-    });
-    throw error;
-  }
-};
 
 export const getWaterQuality = async () => {
   try {
-    console.log(`Haciendo request a: ${API_BASE_URL}/calidad-agua`);
-    const startTime = Date.now();
-    const response = await axios.get(`${API_BASE_URL}/calidad-agua`, {
+    console.log('[WaterQuality] Iniciando request a API...')
+    console.log(`[WaterQuality] Endpoint: ${API_BASE_URL}/latest/calidad_agua`)
+    
+    const startTime = Date.now()
+
+    const response = await axios.get(`${API_BASE_URL}/latest/calidad_agua`, {
       timeout: 10000,
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-      withCredentials: false
-    }).catch(error => {
-      if (error.code === 'ECONNABORTED') {
-        console.warn('Timeout excedido, devolviendo null');
-        return null;
+        'Content-Type': 'application/json'
       }
-      throw error;
-    });
+    })
 
-    if (!response) return null;
-    
-    console.log('Respuesta calidad-agua:', {
-      status: response.status,
-      statusText: response.statusText,
-      duration: `${Date.now() - startTime}ms`,
-      data: response.data,
-      headers: response.headers
-    });
+    const duration = Date.now() - startTime
+    console.log(`[WaterQuality] Respuesta recibida en ${duration}ms`)
+    console.log('[WaterQuality] Datos recibidos:', response.data)
 
-    if (!response.data?.success) {
-      throw new Error(`API respondió con success=false: ${JSON.stringify(response.data)}`);
+    return response.data
+
+  } catch (error) {
+    console.error('[WaterQuality] Error al obtener datos:', error.message)
+
+    if (error.code === 'ECONNABORTED') {
+      console.warn('[WaterQuality] Timeout al conectar con la API')
     }
 
-    return formatWaterQualityData(response.data.data);
-  } catch (error) {
-    console.error('Error en getWaterQuality:', {
-      message: error.message,
-      code: error.code,
-      config: error.config,
-      response: error.response?.data
-    });
-    throw error;
+    throw error
   }
-};
+}
+
 
 export const formatWaterQualityData = (waterData) => {
-  console.log('Datos de calidad de agua recibidos:', waterData);
+  console.log('[WaterQuality] Formateando datos:', waterData);
   
-  const formatted = waterData.map(item => ({
-    id: item.id,
-    conductivity: parseFloat(item.ec).toFixed(2),
-    ppm: parseInt(item.ppm),
-    ph: parseFloat(item.ph).toFixed(1),
-    timestamp: new Date(item.received_at),
-    status: {
-      ph: item.ph > 6.5 ? 'high' : item.ph < 5.5 ? 'low' : 'optimal',
-      ppm: item.ppm > 1800 ? 'high' : item.ppm < 1500 ? 'low' : 'optimal'
-    }
+  const dataArray = Array.isArray(waterData) ? waterData : [waterData];
+  
+  return dataArray.map(item => ({
+    ph: parseFloat(item.ph || 7.0),
+    conductivity: parseFloat(item.ec || item.conductivity || 0),
+    ppm: parseInt(item.ppm || 0),
+    timestamp: item.received_at || item.timestamp || new Date().toISOString()
   }));
-
-  //console.log('Datos de calidad de agua formateados:', formatted);
-  return formatted;
 };
 
 export const formatSensorData = (sensorData) => {
-  //console.log('Datos recibidos para formatear:', sensorData);
-  const formatted = {
+  return {
     temperatura: parseFloat(sensorData.temperatura).toFixed(1),
     humedad: parseFloat(sensorData.humedad).toFixed(1),
     dew_point: parseFloat(sensorData.dew_point).toFixed(1),
     timestamp: new Date(sensorData.received_at)
   };
-  //console.log('Datos formateados:', formatted);
-  return formatted;
+};
+
+export const getAmbientalSensor1 = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/latest/temhum1`, {
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error en getAmbientalSensor1:', error);
+    throw error;
+  }
+};
+
+export const getAmbientalSensor2 = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/latest/temhum2`, {
+      timeout: 10000,
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error en getAmbientalSensor2:', error);
+    throw error;
+  }
 };

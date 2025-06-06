@@ -115,7 +115,7 @@ export default {
     const updateChartData = async () => {
       try {
         await sensorStore.fetchTemperatureHumidityData()
-        
+        console.log('Datos de temperatura y humedad:', sensorStore.temperatureHumidityData)
         if (!sensorStore.temperatureHumidityData || sensorStore.temperatureHumidityData.length === 0) {
           console.warn('No hay datos disponibles')
           return

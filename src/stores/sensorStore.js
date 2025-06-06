@@ -4,7 +4,8 @@ import {
   getAmbientalSensor1, 
   getAmbientalSensor2,
   getWaterQuality,
-  formatSensorData
+  formatSensorData,
+  formatWaterQualityData
 } from '../services/sensorService'
 
 export const useSensorStore = defineStore('sensor', () => {
@@ -19,36 +20,24 @@ export const useSensorStore = defineStore('sensor', () => {
   const fetchTemperatureHumidityData = async () => {
     try {
       error.value = null
-      //console.log('[fetchTemperatureHumidityData] Iniciando carga de datos...')
 
       let sensor1Data = []
       let sensor2Data = []
 
       try {
         const sensor1Response = await getAmbientalSensor1()
-        //console.log('[Sensor 1] Respuesta recibida:', sensor1Response)
-
         const sensor2Response = await getAmbientalSensor2()
-        //console.log('[Sensor 2] Respuesta recibida:', sensor2Response)
 
         if (!sensor1Response || !sensor2Response) {
-          throw new Error('Una o ambas respuestas de API son undefined')
+          throw new Error('No se recibieron datos de los sensores')
         }
 
-        sensor1Data = Array.isArray(sensor1Response) ? sensor1Response : []
-        sensor2Data = Array.isArray(sensor2Response) ? sensor2Response : []
+        // La API devuelve objetos directos
+        sensor1Data = [sensor1Response]
+        sensor2Data = [sensor2Response]
 
-        if (sensor1Data.length === 0 && sensor2Data.length === 0) {
-          //console.warn('API devolvió arrays vacíos, usando datos demo')
-        } else if (sensor1Data.length === 0 || sensor2Data.length === 0) {
-          //console.warn('Advertencia: Uno de los sensores devolvió array vacío')
-        }
-
-      } catch (error) {
-        console.error('Error obteniendo datos de sensores, usando datos demo:', error.message)
-        if (error.code === 'ECONNABORTED') {
-          console.warn('Timeout excedido al conectar con el API')
-        }
+      } catch (err) {
+        console.error('Error obteniendo datos de sensores, usando datos demo:', err.message)
         const now = new Date()
         sensor1Data = [{
           id: 1,
@@ -95,7 +84,6 @@ export const useSensorStore = defineStore('sensor', () => {
           dew_point: item.dew_point
         }))
 
-        //console.log(`[${sensorId.name}] Datos formateados:`, formatted)
         return formatted
       }
 
@@ -104,14 +92,8 @@ export const useSensorStore = defineStore('sensor', () => {
         2: { apiId: 'temhum2', name: 'Secundario' }
       }
 
-      const formatted1 = formatData(sensor1Data, sensorDefinitions[1])
-      const formatted2 = formatData(sensor2Data, sensorDefinitions[2])
-
-      temperatureHumidityData.value.sensor1 = formatted1
-      temperatureHumidityData.value.sensor2 = formatted2
-
-      //console.log('[fetchTemperatureHumidityData] sensor1:', formatted1)
-      //console.log('[fetchTemperatureHumidityData] sensor2:', formatted2)
+      temperatureHumidityData.value.sensor1 = formatData(sensor1Data, sensorDefinitions[1])
+      temperatureHumidityData.value.sensor2 = formatData(sensor2Data, sensorDefinitions[2])
 
     } catch (err) {
       error.value = err.message
@@ -122,23 +104,19 @@ export const useSensorStore = defineStore('sensor', () => {
   const fetchWaterQualityData = async () => {
     try {
       error.value = null
-      //console.log('[fetchWaterQualityData] Solicitando datos...')
 
       const data = await getWaterQuality()
-      //console.log('[fetchWaterQualityData] Respuesta recibida:', data)
 
-      waterQualityData.value = {
-        ph: Number(data.ph),
-        ec: Number(data.ec),
-        ppm: Number(data.ppm),
-        timestamp: data.timestamp || new Date().toISOString()
-      }
+      const formattedData = formatWaterQualityData(data)
 
-      //console.log('[fetchWaterQualityData] Datos formateados:', waterQualityData.value)
+      // Como normalmente esperamos un solo objeto, tomamos el primero
+      waterQualityData.value = formattedData.length > 0 ? formattedData[0] : null
+
+      console.log('[Store] Datos de calidad de agua actualizados:', waterQualityData.value)
 
     } catch (err) {
       error.value = err.message
-      console.error('Error fetching water quality data:', err)
+      console.error('[Store] Error obteniendo datos de calidad de agua:', err)
     }
   }
 
