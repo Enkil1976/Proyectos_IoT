@@ -2,8 +2,8 @@ services:
   - name: invernadero-iot-backend
     type: web
     plan: free
-    buildCommand: npm install
-    startCommand: npm run start:backend
+    buildCommand: npm install --production
+    startCommand: npm start
     envVars:
       - key: PG_URI
         value: postgres://innovaiq:5Anf0rd01!@2h4eh9.easypanel.host:5423/innovaiq?sslmode=disable
