@@ -37,7 +37,7 @@ redisClient.on('ready', () => console.log('✅ Redis conectado correctamente'));
 const app = express();
 app.use(cors({
   origin: [
-    'http://localhost:5174',
+    'https://cosmic-dango-25d9b8.netlify.app/',
     'https://proyectos-iot.onrender.com'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
