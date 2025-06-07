@@ -1,137 +1,237 @@
 <template>
-  <div>
+  <div ref="chartContainer" style="width: 100%; height: 100%">
     <apexchart
-      v-if="loaded"
-      :key="chartKey"
-      type="bar"
+      v-if="isReady && hasData"
+      type="line"
       height="350"
       :options="chartOptions"
       :series="series"
     />
-    <div v-else class="text-center pa-4">
+    <v-alert v-if="isReady && !hasData" type="warning" class="ma-2">
+      No hay datos de calidad de agua disponibles
+    </v-alert>
+    <v-alert v-if="!isReady" type="info" class="ma-2" title="Cargando">
       Cargando datos de calidad de agua...
-    </div>
+      <template #append>
+        <v-progress-circular indeterminate color="primary" size="24" width="2" />
+      </template>
+    </v-alert>
   </div>
 </template>
 
 <script>
-import { defineComponent } from 'vue'
+import { ref, onMounted, onBeforeUnmount, computed } from 'vue'
+import { useSensorStore } from '@/stores/sensorStore'
 import VueApexCharts from 'vue3-apexcharts'
 
-export default defineComponent({
+export default {
   name: 'WaterQualityChart',
   components: {
     apexchart: VueApexCharts
   },
-  props: {
-    ph: {
-      type: Number,
-      default: 6.0
-    },
-    ec: {
-      type: Number,
-      default: 3.0
-    },
-    ppm: {
-      type: Number,
-      default: 1500
-    }
-  },
-  data() {
-    return {
-      chartKey: 0,
-      loaded: false,
-      series: [{
-        name: 'Valor Actual',
-        data: [this.ph || 0, this.ec || 0, this.ppm || 0]
-      }, {
-        name: 'Rango Óptimo',
-        data: [6.5, 3.5, 1750],
-        type: 'line'
-      }],
-      chartOptions: {
-        chart: {
-          type: 'bar',
-          height: 350
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '55%',
-            endingShape: 'rounded'
+  setup() {
+    const sensorStore = useSensorStore()
+    
+    const chartContainer = ref(null)
+    const isReady = ref(false)
+    const hasData = computed(() => series.value.some(s => s.data.length > 0))
+
+    const series = ref([
+      { name: 'pH', data: [] },
+      { name: 'PPM', data: [] }
+    ])
+
+    const chartOptions = ref({
+      chart: {
+        id: 'water-quality-chart',
+        animations: { enabled: true },
+        toolbar: { show: true },
+        zoom: { enabled: true }
+      },
+      stroke: { curve: 'smooth', width: 2 },
+      markers: { size: 4 },
+      xaxis: {
+        type: 'datetime',
+        labels: {
+          datetimeUTC: false,
+          format: 'HH:mm',
+          formatter: function(value) {
+            const date = new Date(value)
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
           },
-        },
-        dataLabels: {
-          enabled: false
-        },
-        stroke: {
-          show: true,
-          width: 2,
-          colors: ['transparent']
-        },
-        xaxis: {
-          categories: ['pH', 'EC (mS/cm)', 'PPM'],
-        },
-        yaxis: {
-          title: {
-            text: 'Valores'
+          style: {
+            fontSize: '12px',
+            colors: '#333',
+            fontWeight: 'bold'
           }
         },
-        fill: {
-          opacity: 1
+        axisBorder: {
+          show: true,
+          color: '#78909C',
+          height: 2
         },
-        tooltip: {
-          y: {
-            formatter: function (val) {
-              return val.toFixed(2)
+        axisTicks: {
+          show: true,
+          color: '#78909C',
+          height: 6
+        }
+      },
+      yaxis: [
+        {
+          title: { text: 'pH' },
+          min: 0,
+          max: 14,
+          labels: {
+            formatter: (value) => value.toFixed(1),
+            style: {
+              colors: ['#333'],
+              fontSize: '12px'
+            }
+          }
+        },
+        {
+          opposite: true,
+          title: { text: 'PPM' },
+          min: 0,
+          labels: {
+            formatter: (value) => value.toFixed(0),
+            style: {
+              colors: ['#333'],
+              fontSize: '12px'
             }
           }
         }
-      }
-    }
-  },
-  watch: {
-    ph: {
-      immediate: true,
-      handler(newVal) {
-        this.updateChartData()
-      }
-    },
-    ec: {
-      immediate: true,
-      handler(newVal) {
-        this.updateChartData()
-      }
-    },
-    ppm: {
-      immediate: true,
-      handler(newVal) {
-        this.updateChartData()
-      }
-    }
-  },
-  methods: {
-    updateChartData() {
-      // Usar JSON.parse/stringify para crear nuevo objeto reactivo
-      this.series = JSON.parse(JSON.stringify([
-        {
-          name: 'Valor Actual',
-          data: [parseFloat(this.ph), parseFloat(this.ec), parseInt(this.ppm)]
-        },
-        {
-          name: 'Rango Óptimo',
-          data: [6.5, 3.5, 1750],
-          type: 'line'
+      ],
+      tooltip: {
+        shared: true,
+        x: { 
+          format: 'HH:mm',
+          formatter: function(value) {
+            const date = new Date(value)
+            return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`
+          }
         }
-      ]));
-      this.loaded = true;
+      },
+      grid: {
+        show: true,
+        borderColor: '#e0e0e0',
+        strokeDashArray: 4,
+        position: 'back',
+        xaxis: {
+          lines: {
+            show: true
+          }
+        },
+        yaxis: {
+          lines: {
+            show: true
+          }
+        }
+      },
+      legend: {
+        position: 'bottom',
+        horizontalAlign: 'center',
+        fontSize: '12px',
+        markers: {
+          width: 12,
+          height: 12,
+          radius: 6
+        },
+        itemMargin: {
+          horizontal: 10,
+          vertical: 5
+        }
+      }
+    })
+
+    const processWaterData = (chartData) => {
+      if (!chartData) {
+        console.warn('[WaterQualityChart] Datos no definidos')
+        return []
+      }
+
+      console.log('[WaterQualityChart] Datos recibidos:', chartData)
       
-      // Forzar actualización del gráfico
-      this.chartKey = Date.now();
+      if (chartData.data && Array.isArray(chartData.data)) {
+        return chartData.data.map(item => ({
+          x: new Date(item.time).getTime(),
+          y1: parseFloat(item.ph),
+          y2: parseFloat(item.ppm)
+        }))
+      }
+
+      console.warn('[WaterQualityChart] Formato de datos no reconocido:', chartData)
+      return []
     }
-  },
-  mounted() {
-    this.updateChartData()
+
+    const updateChartData = async () => {
+      try {
+        console.groupCollapsed('[WaterQualityChart] Actualizando datos...')
+        console.log('[WaterQualityChart] Llamando a fetchWaterQualityChart...')
+        await sensorStore.fetchWaterQualityChart()
+        
+        if (!sensorStore.waterQualityChartData) {
+          console.warn('[WaterQualityChart] Store vacío - no hay datos disponibles')
+          console.groupEnd()
+          return
+        }
+
+        console.log('[WaterQualityChart] Datos del store:', sensorStore.waterQualityChartData)
+        const processedData = processWaterData(sensorStore.waterQualityChartData)
+        console.log('[WaterQualityChart] Datos procesados:', processedData)
+
+        if (!processedData || processedData.length === 0) {
+          console.warn('[WaterQualityChart] Datos procesados vacíos o inválidos')
+          console.groupEnd()
+          return
+        }
+
+        console.log('[WaterQualityChart] Actualizando series del gráfico...')
+        series.value = [
+          { 
+            name: 'pH', 
+            data: processedData.map(p => ({x: p.x, y: p.y1}))
+          },
+          { 
+            name: 'PPM', 
+            data: processedData.map(p => ({x: p.x, y: p.y2}))
+          }
+        ]
+        console.log('[WaterQualityChart] Series actualizadas:', series.value)
+        console.log('[WaterQualityChart] Actualización completada')
+        console.groupEnd()
+      } catch (error) {
+        console.error('[WaterQualityChart] Error al cargar datos:', error)
+        console.groupEnd()
+      }
+    }
+
+    let intervalId = null
+    let observer = null
+
+    onMounted(() => {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            isReady.value = true
+            updateChartData()
+            intervalId = setInterval(updateChartData, 300000)
+            observer.disconnect()
+          }
+        })
+      }, { threshold: 0.1 })
+
+      if (chartContainer.value) {
+        setTimeout(() => observer.observe(chartContainer.value), 100)
+      }
+    })
+
+    onBeforeUnmount(() => {
+      if (intervalId) clearInterval(intervalId)
+      if (observer) observer.disconnect()
+    })
+
+    return { chartContainer, isReady, hasData, series, chartOptions }
   }
-})
+}
 </script>
