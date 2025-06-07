@@ -19,7 +19,7 @@ export default defineConfig({
   server: {
     port: 5173,
     headers: {
-      "Content-Security-Policy": "default-src 'self' http://localhost:5174; script-src 'self' http://localhost:5174 'unsafe-inline' 'unsafe-eval'; style-src 'self' http://localhost:5174 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:4000 http://localhost:5174; font-src 'self'; frame-src 'none'; worker-src 'none'"
+      "Content-Security-Policy": "default-src 'self' http://localhost:5174 https://proyectos-iot.onrender.com; script-src 'self' http://localhost:5174 https://proyectos-iot.onrender.com 'unsafe-inline' 'unsafe-eval'; style-src 'self' http://localhost:5174 https://proyectos-iot.onrender.com 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:4000 http://localhost:5174 https://proyectos-iot.onrender.com; font-src 'self'; frame-src 'none'; worker-src 'none'"
     }
   },
   test: {
