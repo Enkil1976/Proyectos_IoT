@@ -7,13 +7,32 @@ const moment = require('moment');
 const redisClient = createClient({
   url: process.env.REDIS_URL,
   socket: {
-    reconnectStrategy: (retries) => Math.min(retries * 100, 3000)
+    connectTimeout: 5000,
+    reconnectStrategy: (retries) => {
+      console.log(`Reintentando conexión Redis (intento ${retries})`);
+      return Math.min(retries * 100, 5000);
+    }
   }
 });
 
-redisClient.on('error', err => console.error('Redis Client Error', err));
-redisClient.on('ready', () => console.log('✅ Redis listo'));
-redisClient.connect();
+redisClient.on('error', err => {
+  console.error('❌ Error de Redis:', err.message);
+  console.log('ℹ️ Verifica que:');
+  console.log('1. La URL en .env es correcta:', process.env.REDIS_URL);
+  console.log('2. El servidor Redis está accesible');
+  console.log('3. No hay firewalls bloqueando el puerto');
+});
+
+redisClient.on('ready', () => console.log('✅ Redis conectado correctamente'));
+
+(async () => {
+  try {
+    console.log('🔌 Conectando a Redis...');
+    await redisClient.connect();
+  } catch (err) {
+    console.error('❌ Error al conectar a Redis:', err.message);
+  }
+})();
 
 const app = express();
 app.use(cors());
