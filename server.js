@@ -35,7 +35,15 @@ redisClient.on('ready', () => console.log('✅ Redis conectado correctamente'));
 })();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:5174',
+    'https://proyectos-iot.onrender.com'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+}));
 app.use(express.json());
 
 const { Pool } = require('pg');
