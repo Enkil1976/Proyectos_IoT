@@ -35,15 +35,24 @@ redisClient.on('ready', () => console.log('✅ Redis conectado correctamente'));
 })();
 
 const app = express();
-app.use(cors({
+
+// Configuración mejorada de CORS
+const corsOptions = {
   origin: [
-    'https://cosmic-dango-25d9b8.netlify.app/',
+    'https://cosmic-dango-25d9b8.netlify.app',
     'https://proyectos-iot.onrender.com'
   ],
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
-}));
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
+};
+
+// Aplicar CORS a todas las rutas
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // Habilitar preflight para todas las rutas
+
 app.use(express.json());
 
 const { Pool } = require('pg');
