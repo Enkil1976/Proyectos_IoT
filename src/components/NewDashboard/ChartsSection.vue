@@ -3,14 +3,12 @@
     <v-row>
       <v-col cols="12" md="6">
         <v-card>
-          <v-card-title>
-            <v-icon left>mdi-chart-line</v-icon>
-            Temperatura y Humedad
+          <v-card-title class="text-h6">
+            <v-icon left color="primary">mdi-thermometer</v-icon>
+            <span class="font-weight-bold">Temperatura y Humedad</span>
           </v-card-title>
-          <v-card-text style="height: 300px;">
-            <ChartWrapper>
-              <TemperatureHumidityChart />
-            </ChartWrapper>
+          <v-card-text style="height: 350px;">
+              <TemperatureHumidityChart ref="tempHumidityChart" />
           </v-card-text>
         </v-card>
       </v-col>
@@ -22,9 +20,7 @@
             Calidad de Agua
           </v-card-title>
           <v-card-text style="height: 300px;">
-            <ChartWrapper>
-              <WaterQualityChart />
-            </ChartWrapper>
+            <WaterQualityChart ref="waterQualityChart" />
           </v-card-text>
         </v-card>
       </v-col>
@@ -63,11 +59,27 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
-import ChartWrapper from '../common/ChartWrapper.vue'
-import TemperatureHumidityChart from '../TemperatureHumidityChart.vue'
-import WaterQualityChart from '../WaterQualityChart.vue'
+import ChartWrapper from '@/components/common/ChartWrapper.vue'
+import WaterQualityChart from '@/components/WaterQualityChart.vue'
 import LightChart from './LightChart.vue'
 import HistoricalChart from './HistoricalChart.vue'
+import TemperatureHumidityChart from '@/components/TemperatureHumidityChart.vue'
+
+const tempHumidityChart = ref(null)
+const waterQualityChart = ref(null)
+
+onMounted(() => {
+  console.log('[ChartsSection] Componente montado')
+  if (tempHumidityChart.value) {
+    console.log('[ChartsSection] TemperatureHumidityChart está montado')
+  } else {
+    console.warn('[ChartsSection] TemperatureHumidityChart no está disponible')
+  }
+  
+  if (waterQualityChart.value) {
+    console.log('[ChartsSection] WaterQualityChart está montado')
+  }
+})
 </script>

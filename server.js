@@ -5,7 +5,7 @@ const cors = require('cors');
 const moment = require('moment');
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379',
+  url: process.env.REDIS_URL,
   socket: {
     reconnectStrategy: (retries) => Math.min(retries * 100, 3000)
   }
@@ -191,16 +191,42 @@ app.get('/api/stats/:table', cacheMiddleware('daily-stats', 300), async (req, re
 });
 
 // 4. Datos para gráfico por hora
+// 4. Datos para gráfico por hora (mejorado para calidad_agua)
 app.get('/api/chart/:table', cacheMiddleware('chart-data', 180), async (req, res) => {
   const { table } = req.params;
   const { hours = 24 } = req.query;
 
+  // Configuración dinámica por tabla
+  const tableConfigs = {
+    temhum1: {
+      fields: ['temperatura', 'humedad']
+    },
+    temhum2: {
+      fields: ['temperatura', 'humedad']
+    },
+    calidad_agua: {
+      fields: ['ec', 'ppm', 'ph']
+    },
+    luxometro: {
+      fields: ['lux']
+    }
+  };
+
+  if (!tableConfigs[table]) {
+    return res.status(400).json({ error: 'Tabla no soportada para gráficos' });
+  }
+
+  const selectedFields = tableConfigs[table].fields;
+
   try {
+    const selectFields = selectedFields
+      .map(f => `AVG(${f}) AS avg_${f}`)
+      .join(', ');
+
     const query = `
       SELECT
         DATE_TRUNC('hour', received_at) AS hour,
-        AVG(temperatura) AS avg_temperatura,
-        AVG(humedad) AS avg_humedad
+        ${selectFields}
       FROM ${table}
       WHERE received_at >= NOW() - INTERVAL '${hours} hours'
       GROUP BY hour
@@ -211,11 +237,15 @@ app.get('/api/chart/:table', cacheMiddleware('chart-data', 180), async (req, res
 
     const response = {
       hours: parseInt(hours, 10),
-      data: result.rows.map(row => ({
-        time: moment(row.hour).format('YYYY-MM-DD HH:mm'),
-        temperatura: row.avg_temperatura,
-        humedad: row.avg_humedad
-      }))
+      data: result.rows.map(row => {
+        const entry = {
+          time: moment(row.hour).format('YYYY-MM-DD HH:mm')
+        };
+        selectedFields.forEach(f => {
+          entry[f] = row[`avg_${f}`];
+        });
+        return entry;
+      })
     };
 
     if (res.locals.cacheKey) {
@@ -227,6 +257,7 @@ app.get('/api/chart/:table', cacheMiddleware('chart-data', 180), async (req, res
     throw new Error(`Error al generar datos para gráficos: ${err.message}`);
   }
 });
+
 
 // 5. Estado del sistema
 app.get('/api/system-status', async (req, res) => {

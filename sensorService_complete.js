@@ -3,6 +3,7 @@ import axios from 'axios';
 const API_BASE_URL = 'http://localhost:4000/api';
 console.log('[SensorService] Configurando API base:', API_BASE_URL);
 
+// Funciones principales para calidad de agua
 export const getWaterQuality = async () => {
   try {
     console.groupCollapsed('[SensorService] Obteniendo calidad de agua actual');
@@ -66,6 +67,7 @@ export const getWaterQualityChart = async () => {
   }
 };
 
+// Funciones de formateo
 export const formatSensorData = (sensorData) => {
   console.log('[SensorService] Formateando datos de sensor:', sensorData);
   return {
@@ -84,7 +86,6 @@ export const formatWaterQualityData = (waterData) => {
     return Math.max(min, Math.min(max, parsed));
   };
 
-  // Formato API con hours y data
   if (waterData?.hours !== undefined) {
     return {
       data: waterData.data.map(item => ({
@@ -96,7 +97,6 @@ export const formatWaterQualityData = (waterData) => {
     };
   }
 
-  // Formato para datos históricos
   if (waterData?.data) {
     return {
       data: waterData.data.map(item => ({
@@ -108,7 +108,6 @@ export const formatWaterQualityData = (waterData) => {
     };
   }
 
-  // Formato para datos puntuales
   const dataArray = Array.isArray(waterData) ? waterData : [waterData];
   return dataArray.map(item => ({
     ph: parseValue(item.ph, 0, 14, 7.0),
@@ -118,6 +117,7 @@ export const formatWaterQualityData = (waterData) => {
   }));
 };
 
+// Funciones para sensores ambientales
 export const getAmbientalSensor1 = async () => {
   try {
     console.log('[SensorService] Obteniendo datos sensor ambiental 1');

@@ -5,7 +5,8 @@ import path from 'path';
 export default defineConfig({
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './src')
+      '@': path.resolve(__dirname, './src'),
+      'vue': 'vue/dist/vue.esm-bundler.js'
     }
   },
   plugins: [vue({
@@ -18,7 +19,7 @@ export default defineConfig({
   server: {
     port: 5173,
     headers: {
-      "Content-Security-Policy": "default-src 'self' http://localhost:5173; script-src 'self' http://localhost:5173 'unsafe-inline'; style-src 'self' http://localhost:5173 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:4000 http://localhost:5173; font-src 'self'; frame-src 'none'; worker-src 'none'"
+      "Content-Security-Policy": "default-src 'self' http://localhost:5174; script-src 'self' http://localhost:5174 'unsafe-inline' 'unsafe-eval'; style-src 'self' http://localhost:5174 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:4000 http://localhost:5174; font-src 'self'; frame-src 'none'; worker-src 'none'"
     }
   },
   test: {

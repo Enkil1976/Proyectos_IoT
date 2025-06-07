@@ -7,7 +7,7 @@
       </v-col>
 
       <!-- Sensores de temperatura y humedad -->
-      <template v-if="sensorStore.temperatureHumidityData.sensor1?.length || sensorStore.temperatureHumidityData.sensor2?.length">
+      <template v-if="sensorStore.temperatureHumidityData.sensor1 || sensorStore.temperatureHumidityData.sensor2">
         <v-col cols="12" v-for="(sensorData, index) in sensorBlocks" :key="index">
           <v-card class="pa-4 mb-4" outlined>
             <h4 class="text-subtitle-1 mb-3">{{ sensorData.title }}</h4>
@@ -87,8 +87,8 @@
       </v-col>
 
       <!-- Estado de carga -->
-      <v-col v-if="!sensorStore.temperatureHumidityData.sensor1?.length &&
-                  !sensorStore.temperatureHumidityData.sensor2?.length" cols="12">
+      <v-col v-if="!sensorStore.temperatureHumidityData.sensor1 &&
+                  !sensorStore.temperatureHumidityData.sensor2" cols="12">
         <v-alert type="info">Cargando datos de sensores...</v-alert>
       </v-col>
     </v-row>
@@ -121,23 +121,13 @@ onMounted(async () => {
   }, 30000)
 })
 
-const latestSensor1 = computed(() => getLatest(sensorStore.temperatureHumidityData.sensor1))
-const latestSensor2 = computed(() => getLatest(sensorStore.temperatureHumidityData.sensor2))
+const latestSensor1 = computed(() => sensorStore.temperatureHumidityData.sensor1)
+const latestSensor2 = computed(() => sensorStore.temperatureHumidityData.sensor2)
 
 const sensorBlocks = computed(() => [
   { title: 'Sensor 1 (Principal)', latest: latestSensor1.value },
   { title: 'Sensor 2 (Secundario)', latest: latestSensor2.value },
 ])
-
-function getLatest(data) {
-  if (!Array.isArray(data)) return null
-  return data.reduce((latest, item) => {
-    if (!item?.timestamp && !item?.received_at) return latest
-    const itemDate = new Date(item.timestamp || item.received_at)
-    const latestDate = latest ? new Date(latest.timestamp || latest.received_at) : null
-    return (!latest || itemDate > latestDate) ? item : latest
-  }, null)
-}
 
 function timestampDiff(timestamp) {
   if (!timestamp) return 'Sin datos'

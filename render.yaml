@@ -1,0 +1,13 @@
+services:
+  - name: invernadero-iot-backend
+    type: web
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start:backend
+    envVars:
+      - key: PG_URI
+        value: postgres://innovaiq:5Anf0rd01!@2h4eh9.easypanel.host:5423/innovaiq?sslmode=disable
+      - key: REDIS_URL
+        value: redis://default:11211121@2h4eh9.easypanel.host:7963
+      - key: PORT
+        value: 4000

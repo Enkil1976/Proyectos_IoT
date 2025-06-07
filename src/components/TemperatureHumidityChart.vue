@@ -112,7 +112,7 @@ export default {
 
         const data1 = processHistoricalData(chart1Data)
         const data2 = processHistoricalData(chart2Data)
-        const allData = [...data1, ...data2]
+        const allData = [...data1]
 
         console.log('Datos procesados:', {
           data1: data1,
