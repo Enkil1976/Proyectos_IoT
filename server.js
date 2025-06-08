@@ -1,41 +1,26 @@
 const express = require('express');
 const { Client } = require('pg');
-const { createClient } = require('redis');
+const Redis = require('ioredis');
 const cors = require('cors');
 const moment = require('moment');
 
-const redisClient = createClient({
-  socket: {
-    host: '2h4eh9.easypanel.host',
-    port: 6379,
-    connectTimeout: 5000,
-    reconnectStrategy: (retries) => {
-      console.log(`Reintentando conexión Redis (intento ${retries})`);
-      return Math.min(retries * 100, 5000);
-    }
-  },
+const redisClient = new Redis({
+  host: '2h4eh9.easypanel.host',
+  port: 6379,
   password: '5Anf0rd01!',
-  username: 'default'
+  username: 'default',
+  connectTimeout: 5000,
+  retryStrategy: (times) => {
+    console.log(`Reintentando conexión Redis (intento ${times})`);
+    return Math.min(times * 100, 5000);
+  }
 });
 
 redisClient.on('error', err => {
   console.error('❌ Error de Redis:', err.message);
-  console.log('ℹ️ Verifica que:');
-  console.log('1. La URL en .env es correcta:', process.env.REDIS_URL);
-  console.log('2. El servidor Redis está accesible');
-  console.log('3. No hay firewalls bloqueando el puerto');
 });
 
-redisClient.on('ready', () => console.log('✅ Redis conectado correctamente'));
-
-(async () => {
-  try {
-    console.log('🔌 Conectando a Redis...');
-    await redisClient.connect();
-  } catch (err) {
-    console.error('❌ Error al conectar a Redis:', err.message);
-  }
-})();
+redisClient.on('connect', () => console.log('✅ Redis conectado correctamente'));
 
 const app = express();
 
@@ -125,7 +110,7 @@ app.get('/api/latest/:table', cacheMiddleware('latest-record'), async (req, res)
     const data = result.rows[0] || null;
 
     if (data && res.locals.cacheKey) {
-      await redisClient.setEx(res.locals.cacheKey, res.locals.ttl, JSON.stringify(data));
+      await redisClient.set(res.locals.cacheKey, JSON.stringify(data), 'EX', res.locals.ttl);
     }
 
     res.json(data);
@@ -184,7 +169,7 @@ app.get('/api/history/:table', cacheMiddleware('history-data', 60), async (req, 
     };
 
     if (res.locals.cacheKey) {
-      await redisClient.setEx(res.locals.cacheKey, res.locals.ttl, JSON.stringify(response));
+      await redisClient.set(res.locals.cacheKey, JSON.stringify(response), 'EX', res.locals.ttl);
     }
 
     res.json(response);
@@ -220,7 +205,7 @@ app.get('/api/stats/:table', cacheMiddleware('daily-stats', 300), async (req, re
     };
 
     if (res.locals.cacheKey) {
-      await redisClient.setEx(res.locals.cacheKey, res.locals.ttl, JSON.stringify(response));
+      await redisClient.set(res.locals.cacheKey, JSON.stringify(response), 'EX', res.locals.ttl);
     }
 
     res.json(response);
@@ -288,7 +273,7 @@ app.get('/api/chart/:table', cacheMiddleware('chart-data', 180), async (req, res
     };
 
     if (res.locals.cacheKey) {
-      await redisClient.setEx(res.locals.cacheKey, res.locals.ttl, JSON.stringify(response));
+      await redisClient.set(res.locals.cacheKey, JSON.stringify(response), 'EX', res.locals.ttl);
     }
 
     res.json(response);
