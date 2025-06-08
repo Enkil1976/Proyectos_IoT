@@ -6,7 +6,7 @@ const moment = require('moment');
 
 const redisClient = new Redis({
   host: '2h4eh9.easypanel.host',
-  port: 6379,
+  port: 7963,
   password: '5Anf0rd01!',
   username: 'default',
   connectTimeout: 5000,
