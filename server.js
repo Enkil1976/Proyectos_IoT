@@ -5,14 +5,17 @@ const cors = require('cors');
 const moment = require('moment');
 
 const redisClient = createClient({
-  url: process.env.REDIS_URL,
   socket: {
+    host: '2h4eh9.easypanel.host',
+    port: 6379,
     connectTimeout: 5000,
     reconnectStrategy: (retries) => {
       console.log(`Reintentando conexión Redis (intento ${retries})`);
       return Math.min(retries * 100, 5000);
     }
-  }
+  },
+  password: '5Anf0rd01!',
+  username: 'default'
 });
 
 redisClient.on('error', err => {
